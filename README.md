@@ -44,4 +44,5 @@ Todos os textos de amostra devem ser **conferidos** com a fonte oficial antes de
 - O celular só vê a atualização se a pasta for publicada de novo; o app avisa quando a base está há mais de 2 dias sem atualizar.
 - 🔎 Pesquisa local (sem IA) nas leis, súmulas, jurisprudência e doutrina, com trecho e link da fonte. Leis exportáveis em TXT, Word e PDF (imprimir).
 - Leis de SC (ALESC) vêm de arquivo local e não se atualizam sozinhas.
-- Ainda NÃO implementado: STJ (dados abertos), LexML, DataJud/TJSC, legislação estadual/municipal em massa, jurisprudência por dispositivo, IA com fontes.
+- Teses do STJ: `python tools/importar_stj.py [meses]` lê os Dados Abertos do STJ (espelhos de acórdãos) e importa os acórdãos que têm tese jurídica ou tema (379 em 12 meses, matéria agrupada por seção/turma). Entra no atualizador diário. Não são todos os acórdãos nem súmulas do STJ.
+- Ainda NÃO implementado: súmulas do STJ, LexML, DataJud/TJSC, legislação estadual/municipal em massa, jurisprudência por dispositivo, IA com fontes.

@@ -68,6 +68,20 @@ def atualizar_stf(ev):
                    "novos": [], "removidos": [], "alterados": [], "total": abs(n_new - n_ant), "obs": f"{n_ant} → {n_new} súmulas"})
     log(f"[STF] {n_new} súmulas")
 
+def atualizar_stj(ev):
+    p = os.path.join(DATA, "jur_stj.js")
+    antigo = open(p, encoding="utf-8").read() if os.path.exists(p) else ""
+    r = subprocess.run(PY + [os.path.join(RAIZ, "tools", "importar_stj.py"), "12"], capture_output=True, text=True, timeout=3000)
+    novo = open(p, encoding="utf-8").read() if os.path.exists(p) else ""
+    n_ant, n_new = antigo.count('"tese"'), novo.count('"tese"')
+    if r.returncode != 0 or n_new < 0.8 * n_ant:
+        if antigo: open(p, "w", encoding="utf-8").write(antigo)
+        log(f"[STJ] coleta suspeita ({n_new} x {n_ant}); mantida a anterior"); return
+    if n_new != n_ant:
+        ev.append({"data": HOJE, "tipo": "juris", "id": "stj", "nome": "Teses do STJ", "fonte": "https://dadosabertos.web.stj.jus.br/",
+                   "novos": [], "removidos": [], "alterados": [], "total": abs(n_new - n_ant), "obs": f"{n_ant} → {n_new} teses"})
+    log(f"[STJ] {n_new} teses")
+
 def backup():
     dest = os.path.join(RAIZ, "backups"); os.makedirs(dest, exist_ok=True)
     z = os.path.join(dest, f"data_{HOJE}.zip")
@@ -83,6 +97,7 @@ def main():
     backup()  # antes de mexer
     if "--sem-leis" not in sys.argv: atualizar_leis(ev)
     if "--sem-stf" not in sys.argv: atualizar_stf(ev)
+    if "--sem-stj" not in sys.argv: atualizar_stj(ev)
     hist = [e for e in changelog_ler() if e["data"] != HOJE] + ev
     hist = hist[-400:]
     meta = {"ultima": datetime.datetime.now().isoformat(timespec="minutes"), "alteracoes_hoje": len(ev)}
