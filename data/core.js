@@ -23,6 +23,6 @@ window.DATA = {
     { id: 'enam', nome: 'ENAM – Exame Nacional da Magistratura', cor: '#b45309', icone: '📝',
       desc: 'Prova objetiva nacional (ENFAM/FGV) exigida antes dos concursos de ingresso na magistratura. 80 questões; eliminatória.',
       editais: [],
-      materias: ['Direito Constitucional','Direito Civil','Direito Processual Civil','Direito Penal e Processual Penal','Direito Administrativo','Direitos Humanos','Direito Empresarial','Formação humanística e ética'] }
+      materias: ['Direito Constitucional','Direito Civil','Direito Processual Civil','Direito Penal','Direito Administrativo','Direitos Humanos','Direito Empresarial','Noções gerais de Direito e formação humanística'] }
   ]
 };

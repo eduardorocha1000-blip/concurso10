@@ -68,3 +68,8 @@ Rode `tools/iniciar_app.bat` (ou `python tools/servidor.py`): o servidor local s
 - **Mapas mentais em imagem (SVG):** os 4 mapas de exemplo (`python tools/gerar_mapas.py`) e um mapa por capítulo da doutrina, gerado dos títulos do capítulo (`tools/importar_doutrina.py`; ficam em `data/doutrina/mapas/`, fora do repositório público).
 - **Prática dentro da doutrina:** aba "Doutrina e prática". Em cada disciplina (e em Sucessões/Família) há o bloco "Prática" com mapas, fluxogramas, exemplos, questões, flashcards, discursivas e prova oral. A revisão do dia com repetição espaçada continua em `#/m/<módulo>/cards`.
 - `tools/servidor.py` agora envia `Cache-Control: no-cache` (o navegador revalida os arquivos).
+
+## Editais: a matéria dos últimos concursos (📋)
+Tela `#/editais` (e o botão em "Visão geral" de cada módulo): conteúdo programático **copiado dos editais**, por grupo — OAB (47º e 46º Exame; programa da 2ª fase + descrição da 1ª), Magistratura SC (TJSC 2026 e 2024), MPSC (45º/2025, 2023 ×2, 2020), Magistratura Federal (TRF5 2026, TRF6 2025, TRF2 2025, TRF1 2025 — não achei edital recente do TRF4) e ENAM (2026.1 e 2026.2). Cada edital traz o link oficial, a banca, o quadro de distribuição de questões (quando o PDF permitiu extrair), as disciplinas com os pontos numerados, um comparativo de disciplinas entre editais e busca de tema.
+- Gerado por `python tools/editais_extrair.py <pasta com os PDFs>` (lista de editais no topo do script). A extração é automática: confira no edital oficial.
+- Para acrescentar um edital novo: baixe o PDF, extraia o texto (`.txt` com o mesmo nome) e inclua uma linha em `EDITAIS`.

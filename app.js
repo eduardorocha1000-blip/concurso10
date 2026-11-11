@@ -52,6 +52,8 @@ function route() {
       <nav class="tabs">${tabsDe(mod).map(([k, n]) => `<a href="#/m/${mod.id}/${k}" class="${k === tab || (k === 'doutrina' && ['mapas','fluxos','exemplos','questoes','cards','discursivas','orais'].includes(tab)) ? 'on' : ''}">${n}</a>`).join('')}</nav>
       <div id="tab">${VIEWS[tab](mod)}</div>`;
     const on = app.querySelector('.tabs a.on'); on && on.scrollIntoView({ inline: 'center', block: 'nearest' });
+  } else if (p1 === 'editais') {
+    app.innerHTML = window.editaisView ? editaisView(p2) : '<p>Módulo indisponível.</p>'; window.editaisInit && editaisInit(p2);
   } else if (p1 === 'jurisprudencia') {
     app.innerHTML = window.jurisView ? jurisView() : '<p>Módulo indisponível.</p>'; window.jurisInit && jurisInit();
   } else if (p1 === 'busca') {
@@ -70,12 +72,13 @@ function home() {
   const ans = Object.values(qs), ok = ans.filter(a => a.ok).length;
   return `<p class="mut">Plataforma de estudos para concursos jurídicos. Funciona offline; seu progresso fica neste aparelho.</p>
   <div class="grid">${DATA.modulos.map(m => `<a class="card mod" style="--c:${m.cor}" href="#/m/${m.id}/visao"><h2>${m.icone} ${esc(m.nome)}</h2><div class="mut">${esc(m.desc)}</div></a>`).join('')}</div>
+  <a class="card mod" style="--c:#334155" href="#/editais"><h2>📋 Editais</h2><div class="mut">A matéria (conteúdo programático) dos últimos editais de cada grande grupo: OAB, Magistratura SC, MPSC, Magistratura Federal e ENAM.</div></a>
   <div class="card"><h2>Seu progresso</h2>
     <p>🃏 Flashcards para revisar hoje: <b>${due}</b> de ${DATA.cards.length}</p>
     <p>✅ Questões respondidas: <b>${ans.length}</b> · Acertos: <b>${ans.length ? Math.round(100 * ok / ans.length) : 0}%</b></p>
     <div class="bar"><i style="width:${DATA.questoes.length ? Math.round(100 * ans.length / DATA.questoes.length) : 0}%"></i></div></div>
   ${statusAtualizacao()}
-  <p><a href="#/jurisprudencia">⚖️ Pesquisar jurisprudência</a> · <a href="#/busca">🔎 Pesquisar nos documentos</a> · <a href="#/novidades">🔔 Novidades</a> · <a href="#/backup">Backup / restaurar progresso</a></p>`;
+  <p><a href="#/editais">📋 Editais</a> · <a href="#/jurisprudencia">⚖️ Pesquisar jurisprudência</a> · <a href="#/busca">🔎 Pesquisar nos documentos</a> · <a href="#/novidades">🔔 Novidades</a> · <a href="#/backup">Backup / restaurar progresso</a></p>`;
 }
 
 const _alt = (() => { const m = {}; (window.CHANGELOG || []).forEach(e => e.tipo === 'lei' && (e.alterados.concat(e.novos)).forEach(n => ((m[e.id] = m[e.id] || {})[n] = e.data))); return m; })();
@@ -165,7 +168,7 @@ const VIEWS = {
     const top = [];
     DATA.leis.filter(l => inMod(l, mod.id)).forEach(l => l.artigos.forEach(a => { const s = score(a, l.id, mod.id); if (s) top.push({ s, l, a }); }));
     top.sort((a, b) => b.s - a.s);
-    return `${demoBanner()}<div class="card"><h3>📌 ${esc(mod.desc)}</h3>
+    return `${demoBanner()}<div class="card"><h3>📌 ${esc(mod.desc)}</h3><p><a class="btn" href="#/editais/${mod.id}">📋 Ver a matéria dos últimos editais deste grupo</a></p>
       <p><b>Editais analisados:</b> ${mod.editais.length ? mod.editais.map(e => esc(e.nome + ' (' + e.ano + ')')).join(' · ') : '<span class="mut">nenhum cadastrado ainda — edite data/core.js (veja SUGESTOES.md)</span>'}</p>
       <p><b>Matérias:</b> ${mod.materias.map(x => `<span class="tag">${esc(x)}</span>`).join('')}</p></div>
     <div class="card"><h3>🔥 Artigos mais cobrados</h3>${legend()}
@@ -270,8 +273,8 @@ const VIEWS = {
 };
 
 // ---- Guia do ENAM ----
-const ENAM_DIST = [['Direito Constitucional', 16, ['CONSTITUCIONAL']], ['Direito Civil', 12, ['DIREITO CIVIL']], ['Direito Processual Civil', 12, ['DIREITO PROCESSUAL CIVIL']], ['Direito Penal e Processual Penal', 12, ['DIREITO PENAL', 'DIREITO PROCESSUAL PENAL']],
-  ['Direito Administrativo', 10, ['DIREITO ADMINISTRATIVO']], ['Direitos Humanos', 6, []], ['Direito Empresarial', 6, ['DIREITO EMPRESARIAL']], ['Formação humanística e ética (Sociologia, Filosofia, Psicologia, Ética)', 6, []]];
+const ENAM_DIST = [['Direito Constitucional (pode incluir Constitucional do Trabalho, Constitucional Tributário e normas constitucionais de Processo Penal)', 16, ['CONSTITUCIONAL']], ['Direito Civil', 12, ['DIREITO CIVIL']], ['Direito Processual Civil', 12, ['DIREITO PROCESSUAL CIVIL']], ['Direito Penal', 12, ['DIREITO PENAL']],
+  ['Direito Administrativo', 10, ['DIREITO ADMINISTRATIVO']], ['Direitos Humanos', 6, []], ['Direito Empresarial', 6, ['DIREITO EMPRESARIAL']], ['Noções gerais de Direito e formação humanística', 6, []]];
 VIEWS.enam = function (mod) {
   const idx = window.DOUTRINA_IDX || [], lido = store.get('dread', {}), chk = store.get('enamchk', {}), horas = +(store.get('enamh', 20));
   const linhas = ENAM_DIST.map(([nome, q, discs], i) => {
@@ -282,7 +285,7 @@ VIEWS.enam = function (mod) {
   }).join('');
   return `<div class="card"><h3>📝 ENAM — Exame Nacional da Magistratura</h3>
     <p>Exame nacional organizado pela ENFAM (banca: FGV) que antecede os concursos de ingresso na magistratura. Prova objetiva única, de caráter <b>eliminatório</b> (não classificatório), com <b>80 questões</b> de múltipla escolha e 5 alternativas, sem nota negativa. Segundo as fontes consultadas, exige no mínimo <b>56 acertos</b> (40 para candidatos de vagas reservadas) e ocorre duas vezes por ano.</p>
-    <div class="banner">⚠ Estes números vêm de blogs de cursos preparatórios e de notícias, não do edital. <b>Confirme no edital e no cronograma oficiais</b> (FGV: conhecimento.fgv.br/concursos; ENFAM: enfam.jus.br). A distribuição por disciplina abaixo varia entre edições (conferir o Anexo I).</div></div>
+    <div class="banner">A distribuição de questões e o programa abaixo foram conferidos nos editais do 5º (2026.1) e do 6º ENAM (2026.2) em <a href="#/editais/enam">Editais › ENAM</a>. A regra de aprovação (mínimo de 56 acertos; 40 nas vagas reservadas) vem de fontes secundárias: <b>confirme no edital da edição que você vai prestar</b> (FGV: conhecimento.fgv.br/exames/enam).</div></div>
   <div class="card"><h3>Distribuição de questões e plano de estudo</h3>
     <p class="row"><label>Horas de estudo por semana: <input type="number" min="1" max="80" value="${horas}" data-enamh style="width:70px"></label></p>
     <div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%"><thead><tr><th style="text-align:left">Disciplina</th><th>Questões</th><th>Peso</th><th>Horas/sem.</th><th>Leitura da doutrina</th><th>Revisada</th></tr></thead><tbody>${linhas}</tbody></table></div>
