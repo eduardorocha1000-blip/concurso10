@@ -1,7 +1,7 @@
-const V = 'jus-v7';
+const V = 'jus-v8';
 const CORE = ['./', 'index.html', 'styles.css', 'app.js', 'manifest.json', 'icon.svg',
   'data/core.js', 'data/heat.js', 'data/leis_seed.js', 'data/leis_manifest.js',
-  'data/jurisprudencia.js', 'data/estudo.js', 'data/treino.js', 'juris.js', 'editais.js', 'data/mapas_img.js'];
+  'data/jurisprudencia.js', 'data/estudo.js', 'data/principios.js', 'data/treino.js', 'juris.js', 'editais.js', 'data/mapas_img.js'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(V).then(c => c.addAll(CORE))); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V).map(k => caches.delete(k))))); self.clients.claim(); });
 self.addEventListener('fetch', e => {

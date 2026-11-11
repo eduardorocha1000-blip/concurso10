@@ -130,30 +130,51 @@ function pratica(mod, keys, titulo) {
 }
 function biblioteca(mod) {
   const idx = window.DOUTRINA_IDX; if (!idx || !idx.length) return '';
-  const lido = store.get('dread', {}), mostrar = state.dup, byId = Object.fromEntries(idx.map(x => [x.id, x]));
-  const vis = idx.filter(x => mostrar || x.status !== 'dup'), nLido = idx.filter(x => lido[x.id]).length, nDup = idx.filter(x => x.status === 'dup').length;
+  const lido = store.get('dread', {}), byId = Object.fromEntries(idx.map(x => [x.id, x]));
+  const nLido = idx.filter(x => lido[x.id]).length, soma = k => idx.reduce((s, x) => s + (x[k] || 0), 0);
   const item = x => {
-    const par = x.parecidos.map(id => byId[id]), jaLido = par.find(p => lido[p.id]);
-    const aviso = x.status === 'dup' ? `<div class="banner">⚠ Mesmo assunto de: ${par.map(p => esc(p.titulo.slice(0, 80))).join(' · ')}. ${jaLido ? '<b>✅ Assunto já estudado em outro material.</b>' : ''}</div>` : '';
-    return `<details class="card" data-item data-id="${x.id}"><summary>${esc(x.titulo)} <span class="tag">${x.paginas} pág.</span>${lido[x.id] ? '<span class="tag">✅ lido</span>' : ''}${x.status === 'dup' ? '<span class="tag">repetido</span>' : ''}</summary>${aviso}
-      <p class="row"><button data-act="dread" data-id="${x.id}">${lido[x.id] ? 'Marcar como não lido' : 'Marcar como lido'}</button></p><div id="d-${x.id}"><button class="sec" data-act="dload" data-id="${x.id}">Abrir texto</button></div></details>`;
+    const par = (x.parecidos || []).map(id => byId[id]).filter(Boolean), jaLido = par.find(p => lido[p.id]);
+    const aviso = x.status === 'dup' ? `<div class="banner">ℹ Tema parecido com: ${par.map(p => esc(p.titulo.slice(0, 80))).join(' · ')}. ${jaLido ? '<b>✅ Você já leu um deles.</b>' : ''}</div>` : '';
+    const tags = (x.casos ? `<span class="tag">${x.casos} casos</span>` : '') + (x.obj ? `<span class="tag">${x.obj} questões</span>` : '') + (x.disc_q ? `<span class="tag">${x.disc_q} discursivas</span>` : '');
+    return `<details class="card" data-item data-id="${x.id}"><summary>${esc(x.titulo)} ${tags}${lido[x.id] ? '<span class="tag">✅ lido</span>' : ''}${x.status === 'dup' ? '<span class="tag">tema parecido</span>' : ''}</summary>${aviso}
+      <p class="row"><button data-act="dread" data-id="${x.id}">${lido[x.id] ? 'Marcar como não lido' : 'Marcar como lido'}</button></p><div id="d-${x.id}"><button class="sec" data-act="dload" data-id="${x.id}">Abrir capítulo</button></div></details>`;
   };
-  const porDisc = {}; vis.forEach(x => ((porDisc[x.disc] = porDisc[x.disc] || {})[x.materia] = (porDisc[x.disc][x.materia] || [])).push(x));
+  const porDisc = {}; idx.forEach(x => ((porDisc[x.disc] = porDisc[x.disc] || {})[x.materia] = (porDisc[x.disc][x.materia] || [])).push(x));
   const nome = d => d.replace(/^DIREITO /, 'Direito ').replace('PROCESSUAL', 'Processual').replace('CIVIL', 'Civil').replace('PENAL', 'Penal').replace('CONSTITUCIONAL', 'Direito Constitucional').replace('ADMINISTRATIVO', 'Administrativo').replace('EMPRESARIAL', 'Empresarial').replace('DO CONSUMIDOR', 'do Consumidor');
-  return `<div class="card"><h3>📖 Doutrina própria (${vis.length} títulos)</h3><p class="mut">Lidos: <b>${nLido}</b>. ${nDup} títulos repetem o assunto de outro e ficam ocultos${mostrar ? ' (agora visíveis)' : ''}. Nada foi apagado.</p>
-    <button class="sec" data-act="dup">${mostrar ? 'Ocultar' : 'Mostrar'} repetidos</button></div>`
+  return `<div class="card"><h3>📖 Doutrina própria (${idx.length} capítulos)</h3><p class="mut">Lidos: <b>${nLido}</b> · ${soma('casos')} casos práticos · ${soma('obj')} questões objetivas comentadas · ${soma('disc_q')} questões discursivas. Cada capítulo traz: apresentação e objetivos, sumário, teoria, casos práticos, questões objetivas, discursivas e referências.</p></div>`
     + Object.entries(porDisc).map(([d, ms]) => `<details class="card"><summary><b>${esc(nome(d))}</b> <span class="tag">${Object.values(ms).flat().length}</span></summary>
       ${pratica(mod, PRAT[d], 'Prática de ' + nome(d))}${Object.entries(ms).map(([m, xs]) => `<details class="card"><summary>${esc(m)} <span class="tag">${xs.length}</span></summary>${pratica(mod, d === 'DIREITO CIVIL' ? PRAT_MAT[m] : null, 'Prática: ' + m)}${xs.sort((a, b) => a.ordem - b.ordem || a.titulo.localeCompare(b.titulo)).map(item).join('')}</details>`).join('')}</details>`).join('')
     + pratica(mod, ['ECA', 'Ética (OAB)'], 'Prática de outras matérias (ECA e Ética)');
 }
+const blocosHtml = bs => (bs || []).map(([t, x]) => t === 'h' ? `<h4>${esc(x)}</h4>` : t === 'li' ? `<p style="margin:2px 0 2px 14px">• ${esc(x)}</p>` : `<p>${esc(x)}</p>`).join('');
+function questaoHtml(id, q) {
+  const st = store.get('dq', {})[id + ':' + q.n], L = 'ABCDE', gi = q.g ? L.indexOf(q.g) : -1;
+  if (!q.a || q.a.length < 2) return `<div class="card" id="dq-${id}-${q.n}"><p><b>${q.n}.</b> ${esc(q.e)}</p>${q.g ? `<p><b>Gabarito: ${q.g}.</b> ${esc(q.c)}</p>` : ''}</div>`;
+  const alts = q.a.map((t, i) => { const bg = st ? (i === gi ? 'background:#d7f5dd;' : (i === st.pick ? 'background:#fadbd8;' : '')) : ''; return `<button class="sec" data-act="dans" data-id="${id}" data-n="${q.n}" data-i="${i}" style="${bg}display:block;text-align:left;width:100%;margin:3px 0">${L[i]}) ${esc(t)}</button>`; }).join('');
+  const fb = st ? `<p>${st.pick === gi ? '✅ <b>Correto.</b>' : '❌ <b>Errado.</b>'} Gabarito: <b>${q.g || '?'}</b>. ${esc(q.c)}</p>` : '';
+  return `<div class="card" id="dq-${id}-${q.n}"><p><b>${q.n}.</b> ${esc(q.e)}</p>${alts}${fb}</div>`;
+}
 function carregarDoutrina(id) {
   const box = document.getElementById('d-' + id); if (!box) return;
-  const ix = (window.DOUTRINA_IDX || []).find(x => x.id === id), mapaImg = ix && ix.mapa ? `<details class="card" open><summary>🧠 Mapa mental deste capítulo</summary><a href="data/doutrina/mapas/${id}.svg" target="_blank" rel="noopener"><img loading="lazy" src="data/doutrina/mapas/${id}.svg" alt="Mapa mental" style="max-width:100%;height:auto;background:#fff;border-radius:8px"></a><p class="mut">Toque para abrir em tamanho grande. Gerado a partir dos títulos do capítulo.</p></details>` : '';
-  const pintar = () => { const b = (window.DOUT || {})[id]; box.innerHTML = b ? mapaImg + b.map(([t, x]) => t === 'h' ? `<h4>${esc(x)}</h4>` : `<p>${esc(x)}</p>`).join('') : '<p class="mut">Texto indisponível (arquivo não encontrado).</p>'; };
+  const ix = (window.DOUTRINA_IDX || []).find(x => x.id === id), mapaImg = ix && ix.mapa ? `<details class="card"><summary>🧠 Mapa mental deste capítulo</summary><a href="data/doutrina/mapas/${id}.svg" target="_blank" rel="noopener"><img loading="lazy" src="data/doutrina/mapas/${id}.svg" alt="Mapa mental" style="max-width:100%;height:auto;background:#fff;border-radius:8px"></a><p class="mut">Toque para abrir em tamanho grande. Gerado a partir dos títulos do capítulo.</p></details>` : '';
+  const pintar = () => {
+    const b = (window.DOUT || {})[id]; if (!b) { box.innerHTML = '<p class="mut">Texto indisponível (arquivo não encontrado).</p>'; return; }
+    const det = (t, corpo, aberto) => `<details class="card"${aberto ? ' open' : ''}><summary><b>${t}</b></summary>${corpo}</details>`;
+    let h = mapaImg;
+    if (b.ap && b.ap.length) h += det('Apresentação e objetivos', blocosHtml(b.ap), true);
+    if (b.sumario && b.sumario.length) h += det('Sumário', b.sumario.map(s => `<p style="margin:2px 0">${esc(s)}</p>`).join(''));
+    (b.secoes || []).forEach((s, i) => { h += det(`${i + 1}. ${esc(s.t)}`, blocosHtml(s.b), false); });
+    if (b.casos && b.casos.length) h += det(`Casos práticos <span class="tag">${b.casos.length}</span>`, b.casos.map(c => `<details class="card"><summary>Caso ${c.n}${c.t ? ' — ' + esc(c.t) : ''}</summary><p>${esc(c.e)}</p>${c.s ? `<details class="card"><summary>Diretriz de solução</summary><p>${esc(c.s)}</p></details>` : ''}</details>`).join(''), false);
+    if (b.obj && b.obj.length) h += det(`Questões objetivas comentadas <span class="tag">${b.obj.length}</span>`, b.obj.map(q => questaoHtml(id, q)).join(''), false);
+    if (b.disc && b.disc.length) h += det(`Questões discursivas <span class="tag">${b.disc.length}</span>`, b.disc.map(q => `<div class="card"><p><b>${q.n}.</b> ${esc(q.e)}</p>${q.s ? `<details><summary>Ver espelho / padrão de resposta</summary><p>${esc(q.s)}</p></details>` : ''}</div>`).join(''), false);
+    if (b.refs && b.refs.length) h += det('Referências', blocosHtml(b.refs), false);
+    box.innerHTML = h;
+  };
   if ((window.DOUT || {})[id]) return pintar();
   box.textContent = 'Carregando…';
   const sc = document.createElement('script'); sc.src = 'data/doutrina/' + id + '.js'; sc.onload = pintar; sc.onerror = pintar; document.head.appendChild(sc);
 }
+
 
 function backupView() {
   return `<h1>Backup do progresso</h1><div class="card"><p>Copie o texto abaixo para guardar seu progresso, ou cole um backup e restaure.</p>
@@ -403,7 +424,10 @@ document.addEventListener('click', e => {
   else if (a === 'erall') { store.set('eroff', d.v === '1' ? [] : [...new Set(DATA.enunciados.map(ramoDe))]); rerender(); }
   else if (a === 'dload') carregarDoutrina(d.id);
   else if (a === 'dread') { const l = store.get('dread', {}); l[d.id] ? delete l[d.id] : (l[d.id] = 1); store.set('dread', l); const open = [...document.querySelectorAll('details[open]')].map(e => e.dataset.id || e.querySelector('summary')?.textContent.slice(0, 20)); rerender(); document.querySelectorAll('details').forEach(e => { if (open.includes(e.dataset.id || e.querySelector('summary')?.textContent.slice(0, 20))) e.open = true; }); }
-  else if (a === 'dup') { state.dup = !state.dup; rerender(); }
+  else if (a === 'dans') { const b = (window.DOUT || {})[d.id], q = b && b.obj.find(x => String(x.n) === d.n); if (!q) return; const st = store.get('dq', {}); st[d.id + ':' + q.n] = { pick: +d.i }; store.set('dq', st);
+    const gi = q.g ? 'ABCDE'.indexOf(q.g) : -1;
+    if (gi >= 0 && +d.i !== gi) { const ec = store.get('errcards', []), eid = 'e_' + d.id + '_' + q.n; if (!ec.some(c => c.id === eid)) { ec.push({ id: eid, materia: 'Doutrina · caderno de erros', f: q.e + ' ' + q.a.map((t, i) => 'ABCDE'[i] + ') ' + t).join(' '), v: 'Gabarito ' + q.g + ') ' + (q.a[gi] || '') + ' — ' + q.c, mods: ['oab', 'magsc', 'mpsc', 'magfed', 'enam'] }); store.set('errcards', ec); } }
+    const el = document.getElementById('dq-' + d.id + '-' + q.n); if (el) el.outerHTML = questaoHtml(d.id, q); }
   else if (a === 'exp') exportar(d.id, d.f);
   else if (a === 'qf') { state.qf = d.v; rerender(); }
   else if (a === 'redo') { const st = store.get('q', {}); delete st[d.q]; store.set('q', st); rerender(); }
