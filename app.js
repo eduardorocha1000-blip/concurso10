@@ -114,9 +114,32 @@ function exportar(id, fmt) {
   const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = id + '.' + (fmt === 'doc' ? 'doc' : 'txt'); a.click();
 }
 
+function biblioteca() {
+  const idx = window.DOUTRINA_IDX; if (!idx || !idx.length) return '';
+  const lido = store.get('dread', {}), mostrar = state.dup, byId = Object.fromEntries(idx.map(x => [x.id, x]));
+  const nLido = idx.filter(x => lido[x.id]).length, nDup = idx.filter(x => x.status === 'dup').length;
+  const discs = [...new Set(idx.map(x => x.disc))];
+  const item = x => {
+    const par = x.parecidos.map(id => byId[id]), jaLido = par.find(p => lido[p.id]);
+    const aviso = x.status === 'dup' ? `<div class="banner">⚠ Cobre o mesmo assunto de: ${par.map(p => esc(p.titulo.slice(0, 70))).join(' · ')}. ${jaLido ? '<b>✅ Assunto já estudado em outro fascículo.</b>' : ''}</div>` : (x.status === 'manter' ? '<span class="tag">versão mais completa do grupo</span>' : '');
+    return `<details class="card" data-item data-id="${x.id}"><summary>${esc(x.titulo)} <span class="tag">${x.paginas} pág.</span>${lido[x.id] ? '<span class="tag">✅ lido</span>' : ''}${x.status === 'dup' ? '<span class="tag">possível duplicata</span>' : ''}</summary>${aviso}
+      <p class="row"><button data-act="dread" data-id="${x.id}">${lido[x.id] ? 'Marcar como não lido' : 'Marcar como lido'}</button><span class="mut">${esc(x.origem)}</span></p><div id="d-${x.id}"><button class="sec" data-act="dload" data-id="${x.id}">Carregar texto</button></div></details>`;
+  };
+  return `<div class="card"><h3>📖 Doutrina própria (${idx.length} fascículos)</h3><p class="mut">Lidos: <b>${nLido}</b>. ${nDup} fascículos foram marcados como possível repetição de outro (auditoria por similaridade de conteúdo). Nada foi apagado.</p>
+    <button class="sec" data-act="dup">${mostrar ? 'Ocultar' : 'Mostrar'} possíveis duplicatas</button></div>`
+    + discs.map(d => `<details class="card"><summary><b>${esc(d)}</b> <span class="tag">${idx.filter(x => x.disc === d).length}</span></summary>${idx.filter(x => x.disc === d && (mostrar || x.status !== 'dup')).map(item).join('')}</details>`).join('');
+}
+function carregarDoutrina(id) {
+  const box = document.getElementById('d-' + id); if (!box) return;
+  const pintar = () => { const b = (window.DOUT || {})[id]; box.innerHTML = b ? b.map(([t, x]) => t === 'h' ? `<h4>${esc(x)}</h4>` : `<p>${esc(x)}</p>`).join('') : '<p class="mut">Texto indisponível (arquivo não encontrado).</p>'; };
+  if ((window.DOUT || {})[id]) return pintar();
+  box.textContent = 'Carregando…';
+  const sc = document.createElement('script'); sc.src = 'data/doutrina/' + id + '.js'; sc.onload = pintar; sc.onerror = pintar; document.head.appendChild(sc);
+}
+
 function backupView() {
   return `<h1>Backup do progresso</h1><div class="card"><p>Copie o texto abaixo para guardar seu progresso, ou cole um backup e restaure.</p>
-  <textarea id="bk">${esc(JSON.stringify({ cards: store.get('cards', {}), q: store.get('q', {}), errcards: store.get('errcards', []) }))}</textarea>
+  <textarea id="bk">${esc(JSON.stringify({ cards: store.get('cards', {}), q: store.get('q', {}), errcards: store.get('errcards', []), dread: store.get('dread', {}) }))}</textarea>
   <p class="row"><button data-act="restore">Restaurar</button><a class="btn sec" href="#/">Voltar</a></p></div>`;
 }
 
@@ -158,7 +181,7 @@ const VIEWS = {
 
   doutrina(mod) {
     const it = DATA.doutrina.filter(x => inMod(x, mod.id));
-    return filterBox('Filtrar doutrina…') + it.map(d => `<details class="card" data-item open><summary>${esc(d.titulo)} <span class="tag">${esc(d.materia)}</span></summary>${d.corpo}</details>`).join('');
+    return biblioteca() + filterBox('Filtrar doutrina…') + it.map(d => `<details class="card" data-item open><summary>${esc(d.titulo)} <span class="tag">${esc(d.materia)}</span></summary>${d.corpo}</details>`).join('');
   },
 
   mapas(mod) {
@@ -263,10 +286,13 @@ document.addEventListener('click', e => {
       store.set('errcards', ec); delete cs[id]; store.set('cards', cs);
     }
     rerender(); }
+  else if (a === 'dload') carregarDoutrina(d.id);
+  else if (a === 'dread') { const l = store.get('dread', {}); l[d.id] ? delete l[d.id] : (l[d.id] = 1); store.set('dread', l); const open = [...document.querySelectorAll('details[open]')].map(e => e.dataset.id || e.querySelector('summary')?.textContent.slice(0, 20)); rerender(); document.querySelectorAll('details').forEach(e => { if (open.includes(e.dataset.id || e.querySelector('summary')?.textContent.slice(0, 20))) e.open = true; }); }
+  else if (a === 'dup') { state.dup = !state.dup; rerender(); }
   else if (a === 'exp') exportar(d.id, d.f);
   else if (a === 'qf') { state.qf = d.v; rerender(); }
   else if (a === 'redo') { const st = store.get('q', {}); delete st[d.q]; store.set('q', st); rerender(); }
-  else if (a === 'restore') { try { const o = JSON.parse($('#bk').value); store.set('cards', o.cards || {}); store.set('q', o.q || {}); store.set('errcards', o.errcards || []); alert('Restaurado.'); location.hash = '#/'; } catch { alert('Backup inválido.'); } }
+  else if (a === 'restore') { try { const o = JSON.parse($('#bk').value); store.set('cards', o.cards || {}); store.set('q', o.q || {}); store.set('errcards', o.errcards || []); store.set('dread', o.dread || {}); alert('Restaurado.'); location.hash = '#/'; } catch { alert('Backup inválido.'); } }
 });
 const curMod = () => location.hash.split('/')[2];
 document.addEventListener('input', e => {
@@ -286,10 +312,7 @@ window.addEventListener('hashchange', () => { state.flow = null; state.show = fa
 // ---- Boot: carrega leis completas (se houver) e inicia ----
 function loadScript(src) { return new Promise(r => { const s = document.createElement('script'); s.src = src; s.onload = s.onerror = r; document.head.appendChild(s); }); }
 (async () => {
-  for (const f of (window.LEI_FILES || [])) await loadScript('data/leis/' + f);
-  // lei importada com mesmo id substitui a amostra
-  const map = new Map(); DATA.leis.forEach(l => map.set(l.id, l)); DATA.leis = [...map.values()];
-  // súmulas importadas dos sites oficiais: atualizam o texto das amostras e acrescentam as demais
+  // 1) mostra o app já com as súmulas e a amostra; 2) carrega as leis em paralelo e atualiza ao terminar
   const ALLM = DATA.modulos.map(m => m.id), idx = new Map(DATA.sumulas.map(x => [x.tribunal + '|' + x.n, x]));
   (window.JUR_IMPORT || []).flat().forEach(x => {
     const k = x.tribunal + '|' + x.n, ex = idx.get(k);
@@ -299,4 +322,13 @@ function loadScript(src) { return new Promise(r => { const s = document.createEl
   DATA.sumulas.sort((a, b) => (a.tribunal > b.tribunal ? 1 : a.tribunal < b.tribunal ? -1 : (parseInt(a.n) || 0) - (parseInt(b.n) || 0)));
   route();
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
+  const files = window.LEI_FILES || []; let feitos = 0, i = 0;
+  const ld = document.createElement('div'); ld.style.cssText = 'position:fixed;bottom:8px;right:8px;background:#1e3a5f;color:#fff;padding:6px 10px;border-radius:8px;font-size:12px;z-index:9';
+  if (files.length) document.body.appendChild(ld);
+  const worker = async () => { while (i < files.length) { const f = files[i++]; await loadScript('data/leis/' + f); ld.textContent = '⏳ Carregando leis ' + (++feitos) + '/' + files.length; } };
+  await Promise.all([worker(), worker(), worker(), worker(), worker(), worker()]);
+  ld.remove();
+  // lei importada com mesmo id substitui a amostra
+  const map = new Map(); DATA.leis.forEach(l => map.set(l.id, l)); DATA.leis = [...map.values()];
+  if (!document.activeElement || !['TEXTAREA', 'INPUT'].includes(document.activeElement.tagName)) { const y = window.scrollY; route(); window.scrollTo(0, y); }
 })();

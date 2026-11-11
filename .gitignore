@@ -2,3 +2,6 @@ backups/
 tools/atualizar.log
 __pycache__/
 .claude/
+data/doutrina/
+dados/doutrina/
+dados/emulador_*.png
