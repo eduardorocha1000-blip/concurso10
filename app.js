@@ -169,7 +169,7 @@ const VIEWS = {
     DATA.leis.filter(l => inMod(l, mod.id)).forEach(l => l.artigos.forEach(a => { const s = score(a, l.id, mod.id); if (s) top.push({ s, l, a }); }));
     top.sort((a, b) => b.s - a.s);
     return `${demoBanner()}<div class="card"><h3>📌 ${esc(mod.desc)}</h3><p><a class="btn" href="#/editais/${mod.id}">📋 Ver a matéria dos últimos editais deste grupo</a></p>
-      <p><b>Editais analisados:</b> ${mod.editais.length ? mod.editais.map(e => esc(e.nome + ' (' + e.ano + ')')).join(' · ') : '<span class="mut">nenhum cadastrado ainda — edite data/core.js (veja SUGESTOES.md)</span>'}</p>
+      <p><b>Editais analisados:</b> ${mod.editais.length ? mod.editais.map(e => esc(e.nome + ' (' + e.ano + ')')).join(' · ') : '<span class="mut">veja o botão acima (conteúdo programático dos editais publicados)</span>'}</p>
       <p><b>Matérias:</b> ${mod.materias.map(x => `<span class="tag">${esc(x)}</span>`).join('')}</p></div>
     <div class="card"><h3>🔥 Artigos mais cobrados</h3>${legend()}
       ${top.slice(0, 12).map(({ s, l, a }) => `<div class="art h${s}"><b>${esc(l.nome.split('(')[0])} · art. ${esc(a.n)}</b> ${stars(s)} ${heatBadge(s)}</div>`).join('') || '<p class="mut">Sem dados de frequência.</p>'}</div>
