@@ -54,7 +54,8 @@ Rode `tools/iniciar_app.bat` (ou `python tools/servidor.py`): o servidor local s
 - **Metadados (DataJud/CNJ):** STJ, TST, TSE, STM, 27 TJs + TJDFT, 6 TRFs, 24 TRTs, 27 TREs, 3 TJMs — número, classe, órgão julgador, assuntos, data de ajuizamento. O DataJud não fornece ementa nem inteiro teor, e cada consulta leva ~30–50 s. Cada tribunal tem o botão "pesquisar no site oficial".
 - **Bloqueados para robôs:** STJ (pesquisa de jurisprudência), TJSC, TSE, LexML, TJSP (captcha) — não são contornados; use o link para o site oficial.
 - Campos que a fonte não fornece ficam nulos. Cada resultado traz fonte e data da verificação.
-- **IA (opcional):** defina `ANTHROPIC_API_KEY` no ambiente deste PC e reinicie o servidor. A IA só recebe as decisões que você marcar ("usar na IA"), deve citar processos e não inventar precedentes. A chave fica só no servidor.
+- **Organização sem IA:** marque decisões e use "Comparar lado a lado", "Legislação citada (consolidada)", "Palavras-chave em comum" ou "Copiar lista" (não resume nem interpreta).
+- **IA (opcional, desligada por padrão):** defina `ANTHROPIC_API_KEY` no ambiente deste PC e reinicie o servidor. A IA só recebe as decisões que você marcar ("usar na IA"), deve citar processos e não inventar precedentes. A chave fica só no servidor.
 - Só funciona com o servidor local ligado (no GitHub Pages/celular fora do PC não há pesquisa ao vivo).
 
 ## Leis e súmulas

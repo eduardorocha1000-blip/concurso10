@@ -16,7 +16,7 @@
       <div id="jserv"></div>
       <div class="row"><input id="jq" type="search" placeholder="Ex.: responsabilidade civil por erro médico" style="flex:1;min-width:220px"><button data-ja="buscar">Pesquisar</button></div>
       <details><summary>Filtros</summary>
-        <div class="row"><input id="jrel" placeholder="Relator"><input id="jcls" placeholder="Classe (ex.: ARE, RE, ADI)"><input id="jorg" placeholder="Órgão julgador"></div>
+        <div class="row"><input id="jrel" placeholder="Relator"><input id="jcls" placeholder="Classe (ex.: ARE, RE, ADI)"><input id="jorgao" placeholder="Órgão julgador"></div>
         <div class="row"><label>De <input id="jde" type="date"></label><label>Até <input id="jate" type="date"></label>
           <select id="jtipo"><option value="acordaos">Acórdãos (STF)</option><option value="decisoes">Decisões monocráticas (STF)</option></select></div>
         <p class="mut">Relator, tipo e classe valem para o STF. Os demais tribunais (DataJud) aceitam classe, órgão julgador e período de ajuizamento.</p></details>
@@ -56,7 +56,7 @@
 
   async function buscar() {
     J.q = document.getElementById('jq').value.trim();
-    J.f = { relator: val('jrel'), classe: val('jcls'), orgao: val('jorg'), de: val('jde'), ate: val('jate'), tipo: val('jtipo') };
+    J.f = { relator: val('jrel'), classe: val('jcls'), orgao: val('jorgao'), de: val('jde'), ate: val('jate'), tipo: val('jtipo') };
     if (!J.q && !J.f.relator) return alert('Digite o que pesquisar.');
     J.res = {}; J.st = {}; J.sel_ia = new Set();
     const lista = J.trib.filter(t => J.sel.has(t.id)); let i = 0;
@@ -76,7 +76,7 @@
       <div class="mut" style="font-size:12px">Fonte: ${esc(r.fonte || '—')} · verificado em ${esc(r.verificado_em || '—')} · ${esc(r.disponibilidade || '')}</div>
       <p class="row">${r.inteiro_teor_url || r.url_origem ? `<a class="btn" href="${esc(r.inteiro_teor_url || r.url_origem)}" target="_blank" rel="noopener">Inteiro teor / fonte</a>` : ''}
         <button class="sec" data-ja="fav" data-k="${esc(k)}">${fav[k] ? 'Desfavoritar' : '⭐ Favoritar'}</button><button class="sec" data-ja="comp" data-k="${esc(k)}">Compartilhar</button>
-        <label><input type="checkbox" data-jia="${esc(k)}" ${J.sel_ia.has(k) ? 'checked' : ''}> usar na IA</label></p></div>`;
+        <label><input type="checkbox" data-jia="${esc(k)}" ${J.sel_ia.has(k) ? 'checked' : ''}> usar na IA/organização</label></p></div>`;
   }
   const todos = () => Object.values(J.res).flat();
 
@@ -101,10 +101,50 @@
     const n = J.sel_ia.size;
     if (el.dataset.ok) { const c = document.getElementById('jian'); if (c) c.textContent = n; return; }
     el.dataset.ok = '1';
-    el.innerHTML = `<h3>🤖 Análise com IA</h3><p class="mut">A IA trabalha <b>somente</b> com as decisões que você marcou ("usar na IA") — <b id="jian">${n}</b> marcada(s) — e deve citar os números dos processos. Confira sempre na fonte.</p>
-      ${J.ia ? '' : '<div class="banner">IA desligada: defina a variável de ambiente <code>ANTHROPIC_API_KEY</code> neste PC e reinicie o servidor (a chave nunca passa pelo app).</div>'}
-      <div class="row">${[['resumo', 'Resumo'], ['tese', 'Tese jurídica'], ['fundamentos', 'Fundamentos'], ['legislacao', 'Legislação citada'], ['precedentes', 'Precedentes mencionados'], ['comparar', 'Comparar'], ['divergencias', 'Divergências']].map(([k, n2]) => `<button class="sec" data-ja="ia" data-tarefa="${k}">${n2}</button>`).join('')}</div>
-      <div class="row"><input id="jiaq" placeholder="Pergunta livre sobre as decisões marcadas" style="flex:1;min-width:220px"><button data-ja="ia" data-tarefa="livre">Perguntar</button></div><div id="jiares"></div>`;
+    el.innerHTML = `<h3>📋 Organizar decisões marcadas</h3><p class="mut">Marque "usar na IA/organização" nos resultados (<b id="jian">${n}</b> marcada(s)). Sem IA: só reorganiza o que a fonte forneceu, sem resumir nem interpretar.</p>
+      <div class="row"><button data-ja="org" data-o="comparar">Comparar lado a lado</button><button class="sec" data-ja="org" data-o="leis">Legislação citada (consolidada)</button><button class="sec" data-ja="org" data-o="chaves">Palavras-chave em comum</button><button class="sec" data-ja="org" data-o="texto">Copiar lista</button></div>
+      <div id="jorg"></div>
+      ${J.ia ? `<h3>🤖 Análise com IA (opcional)</h3><div class="row">${[['resumo', 'Resumo'], ['tese', 'Tese jurídica'], ['fundamentos', 'Fundamentos'], ['legislacao', 'Legislação citada'], ['precedentes', 'Precedentes mencionados'], ['comparar', 'Comparar'], ['divergencias', 'Divergências']].map(([k, n2]) => `<button class="sec" data-ja="ia" data-tarefa="${k}">${n2}</button>`).join('')}</div>
+      <div class="row"><input id="jiaq" placeholder="Pergunta livre sobre as decisões marcadas" style="flex:1;min-width:220px"><button data-ja="ia" data-tarefa="livre">Perguntar</button></div><div id="jiares"></div>` : ''}`;
+  }
+
+  // ---- organização sem IA ----
+  const ordinal = n => (+n <= 9 ? '§ ' + (+n) + 'º' : '§ ' + (+n));
+  function leisCitadas(txt) {
+    if (!txt) return [];
+    return String(txt).split(/LEG-/).slice(1).map(bl => {
+      const ls = bl.split('\n').map(x => x.trim()).filter(Boolean), cab = ls[0] || '';
+      const m = cab.match(/(LEI|DEL|LCP|DLG|MPV|DEC|EMC|RES)-0*(\d+)\s+ANO-(\d{4})/) , alt = cab.match(/\b([A-Z]{2,6}(?:-\d{2,4})?)\s+ANO-(\d{4})/) ;
+      const sm = cab.match(/SUM(STF|STJ|V)?-0*(\d+)/);
+      const nome = sm ? 'Súmula ' + sm[2] + (sm[1] === 'V' ? ' Vinculante' : sm[1] ? '/' + sm[1] : '') : m ? ({ LEI: 'Lei', DEL: 'Decreto-Lei', LCP: 'Lei Complementar', DLG: 'Decreto Legislativo', MPV: 'Medida Provisória', DEC: 'Decreto', EMC: 'Emenda Constitucional', RES: 'Resolução' }[m[1]] + ' ' + (+m[2]).toLocaleString('pt-BR') + '/' + m[3]) : (alt ? alt[1] + ' (' + alt[2] + ')' : cab.replace(/\s+/g, ' '));
+      const resto = ls.slice(1).join(' ') + ' ' + cab, arts = [...resto.matchAll(/ART-0*(\d+[A-Z]?)/g)].map(x => 'art. ' + x[1]), pars = [...resto.matchAll(/PAR-0*(\d+)/g)].map(x => ordinal(x[1])), incs = [...resto.matchAll(/INC-0*(\d+)/g)].map(x => 'inc. ' + (+x[1]));
+      return { lei: nome, disp: [...new Set(arts)].join(', ') + (pars.length ? ', ' + [...new Set(pars)].join(', ') : '') + (incs.length ? ', ' + [...new Set(incs)].join(', ') : '') };
+    }).filter(x => x.lei);
+  }
+  const marcadas = () => todos().concat(Object.values(lsGet('favj', {}))).filter((r, i, a) => J.sel_ia.has(key(r)) && a.findIndex(x => key(x) === key(r)) === i);
+  function organizar(o) {
+    const box = document.getElementById('jorg'), dec = marcadas();
+    if (!dec.length) { box.innerHTML = '<p class="mut">Marque ao menos uma decisão em "usar na IA/organização".</p>'; return; }
+    if (o === 'comparar') {
+      const lin = [['Tribunal / número', r => `<b>${esc(r.tribunal_id.toUpperCase())}</b> ${esc(r.numero_processo)}`], ['Classe', r => esc(r.classe || '—')], ['Relator', r => esc(r.relator || '—')], ['Órgão julgador', r => esc(r.orgao_julgador || '—')],
+        ['Julgamento', r => esc(r.data_julgamento || r.data_ajuizamento || '—')], ['Precedente qualificado', r => r.precedente_qualificado == null ? '—' : (r.precedente_qualificado ? 'sim' : 'não')],
+        ['Palavras-chave', r => esc([].concat(r.palavras_chave || ['—']).join('; '))], ['Legislação citada', r => leisCitadas(r.legislacao_citada).map(l => esc(l.lei + (l.disp ? ' — ' + l.disp : ''))).join('<br>') || '—'],
+        ['Ementa', r => esc(r.ementa || r.disponibilidade || '—')], ['Fonte', r => (r.inteiro_teor_url || r.url_origem) ? `<a href="${esc(r.inteiro_teor_url || r.url_origem)}" target="_blank" rel="noopener">abrir</a>` : '—']];
+      box.innerHTML = `<div style="overflow-x:auto"><table style="border-collapse:collapse;min-width:${dec.length * 260}px"><tbody>${lin.map(([t, f]) => `<tr><th style="text-align:left;vertical-align:top;padding:6px;border:1px solid var(--bd,#ccc);width:120px">${t}</th>${dec.slice(0, 8).map(r => `<td style="vertical-align:top;padding:6px;border:1px solid var(--bd,#ccc);font-size:13px">${f(r)}</td>`).join('')}</tr>`).join('')}</tbody></table></div>${dec.length > 8 ? '<p class="mut">Mostrando as 8 primeiras.</p>' : ''}`;
+    } else if (o === 'leis') {
+      const c = {};
+      dec.forEach(r => leisCitadas(r.legislacao_citada).forEach(l => { const e = (c[l.lei] = c[l.lei] || { n: new Set(), d: new Set() }); e.n.add(r.numero_processo); if (l.disp) e.d.add(l.disp); }));
+      const rows = Object.entries(c).sort((a, b) => b[1].n.size - a[1].n.size);
+      box.innerHTML = rows.length ? `<table><tbody>${rows.map(([l, e]) => `<tr><td><b>${esc(l)}</b></td><td>${e.n.size}/${dec.length} decisões</td><td class="mut">${esc([...e.d].join(' | '))}</td></tr>`).join('')}</tbody></table>` : '<p class="mut">As decisões marcadas não trazem legislação citada na fonte (DataJud não fornece).</p>';
+    } else if (o === 'chaves') {
+      const c = {}; dec.forEach(r => [].concat(r.palavras_chave || r.assuntos || []).forEach(k => { const t = String(k).trim(); if (t && !/^VIDE EMENTA$/i.test(t)) (c[t] = c[t] || new Set()).add(r.numero_processo); }));
+      const rows = Object.entries(c).sort((a, b) => b[1].size - a[1].size).slice(0, 40);
+      box.innerHTML = rows.length ? rows.map(([k, s]) => `<span class="tag">${esc(k)} · ${s.size}</span>`).join(' ') : '<p class="mut">Sem palavras-chave/assuntos nas decisões marcadas.</p>';
+    } else if (o === 'texto') {
+      const tx = dec.map(r => `${r.tribunal} — ${r.numero_processo}${r.relator ? ' — Rel. ' + r.relator : ''}${r.data_julgamento ? ' — ' + r.data_julgamento : ''}\n${r.ementa || ''}\n${r.inteiro_teor_url || r.url_origem || ''}`).join('\n\n');
+      if (navigator.clipboard) navigator.clipboard.writeText(tx).then(() => { box.innerHTML = '<p>✅ Lista copiada.</p>'; }, () => { box.innerHTML = `<textarea style="width:100%;height:10em">${esc(tx)}</textarea>`; });
+      else box.innerHTML = `<textarea style="width:100%;height:10em">${esc(tx)}</textarea>`;
+    }
   }
 
   async function usarIA(tarefa) {
@@ -129,6 +169,7 @@
     else if (a === 'fav') { const f = lsGet('favj', {}), r = todos().concat(Object.values(f)).find(x => key(x) === d.k); if (f[d.k]) delete f[d.k]; else if (r) f[d.k] = r; lsSet('favj', f); pintarRes(); pintarFav(); }
     else if (a === 'comp') { const r = todos().concat(Object.values(lsGet('favj', {}))).find(x => key(x) === d.k); if (!r) return; const tx = `${r.tribunal} — ${r.numero_processo}\n${r.ementa || ''}\n${r.inteiro_teor_url || r.url_origem || ''}`; if (navigator.share) navigator.share({ title: r.numero_processo, text: tx }).catch(() => { }); else if (navigator.clipboard) navigator.clipboard.writeText(tx).then(() => alert('Copiado.')); }
     else if (a === 'ia') usarIA(d.tarefa);
+    else if (a === 'org') organizar(d.o);
   });
   document.addEventListener('change', e => {
     const t = e.target;
