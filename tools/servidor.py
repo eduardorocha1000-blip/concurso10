@@ -146,7 +146,7 @@ def ia(corpo):
     pedido = "%s\nPergunta/Instrução: %s\n\nDecisões recuperadas (JSON):\n%s" % (tarefas.get(corpo.get("tarefa"), ""), corpo.get("pergunta", ""), json.dumps(dec, ensure_ascii=False)[:60000])
     body = {"model": os.environ.get("JUS_MODEL", "claude-sonnet-5-5"), "max_tokens": 1800, "system": SISTEMA, "messages": [{"role": "user", "content": pedido}]}
     try:
-        r = http_json("https://api.anthropic.com/v1/messages", body, {"x-api-key": chave, "anthropic-version": "2023-06-01"}, 120)
+        r = http_json(os.environ.get("ANTHROPIC_BASE_URL", "https://api.anthropic.com") + "/v1/messages", body, {"x-api-key": chave, "anthropic-version": "2023-06-01"}, 120)
         return {"ok": True, "texto": "".join(b.get("text", "") for b in r.get("content", [])), "base": [d.get("numero_processo") for d in dec]}
     except Exception as e:
         return {"ok": False, "erro": "%s: %s" % (type(e).__name__, str(e)[:200])}
