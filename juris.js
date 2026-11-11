@@ -2,7 +2,7 @@
 // Exige o servidor local: python tools/servidor.py
 (function () {
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-  const J = { trib: null, sel: new Set(['stf']), res: {}, st: {}, sel_ia: new Set(), q: '', f: {}, ia: false, fav: false, abertos: new Set() };
+  const J = { modo: 'juris', inf: null, selInf: new Set(['stf', 'stj']), trib: null, sel: new Set(['stf']), res: {}, st: {}, sel_ia: new Set(), q: '', f: {}, ia: false, fav: false, abertos: new Set() };
   const lsGet = (k, d) => { try { return JSON.parse(localStorage.getItem('jus.' + k)) ?? d; } catch { return d; } };
   const lsSet = (k, v) => { try { localStorage.setItem('jus.' + k, JSON.stringify(v)); } catch { } };
   const GRUPOS = ['Superiores', 'Justiça Estadual', 'Justiça Federal', 'Justiça do Trabalho', 'Justiça Eleitoral', 'Justiça Militar'];
@@ -11,8 +11,9 @@
   async function api(path, opt) { const r = await fetch(path, opt); if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); }
 
   window.jurisView = function () {
-    return `<h1>⚖️ Pesquisa de jurisprudência</h1>
-    <div class="card"><p class="mut">Pesquisa ao vivo nos sites dos tribunais, <b>sem armazenar</b> as decisões. Mostra só o que a fonte fornece (campos ausentes ficam em branco).</p>
+    return `<h1>⚖️ Pesquisa de jurisprudência e informativos</h1>
+    <div class="card"><p class="row"><button id="jm1" data-ja="modo" data-m="juris">Jurisprudência</button><button id="jm2" class="sec" data-ja="modo" data-m="inf">Informativos</button></p>
+      <p class="mut" id="jdesc">Pesquisa ao vivo nos sites dos tribunais, <b>sem armazenar</b> as decisões. Mostra só o que a fonte fornece (campos ausentes ficam em branco).</p>
       <div id="jserv"></div>
       <div class="row"><input id="jq" type="search" placeholder="Ex.: responsabilidade civil por erro médico" style="flex:1;min-width:220px"><button data-ja="buscar">Pesquisar</button></div>
       <details><summary>Filtros</summary>
@@ -26,8 +27,22 @@
     <p><a href="#/">Voltar</a></p>`;
   };
 
+  const lista = () => J.modo === 'inf' ? ((J.inf || {}).ao_vivo || []) : (J.trib || []);
+  function pintarModo() {
+    const a = document.getElementById('jm1'), b = document.getElementById('jm2'); if (!a) return;
+    a.className = J.modo === 'juris' ? '' : 'sec'; b.className = J.modo === 'inf' ? '' : 'sec';
+    document.getElementById('jdesc').innerHTML = J.modo === 'inf' ? 'Pesquisa ao vivo nos <b>informativos de jurisprudência</b> dos tribunais que permitem consulta automática (STF e STJ), <b>sem armazenar</b> o conteúdo. Para os demais, há o link do site oficial.' : 'Pesquisa ao vivo nos sites dos tribunais, <b>sem armazenar</b> as decisões. Mostra só o que a fonte fornece (campos ausentes ficam em branco).';
+    document.getElementById('jq').placeholder = J.modo === 'inf' ? 'Ex.: erro médico, responsabilidade civil do Estado' : 'Ex.: responsabilidade civil por erro médico';
+  }
   function pintarTribunais() {
-    const el = document.getElementById('jtrib'); if (!el || !J.trib) return;
+    const el = document.getElementById('jtrib'); if (!el) return;
+    if (J.modo === 'inf') {
+      if (!J.inf) { el.innerHTML = ''; return; }
+      el.innerHTML = J.inf.ao_vivo.map(t => `<label style="display:inline-block;margin:2px 10px 2px 0"><input type="checkbox" data-jinf="${t.id}" ${J.selInf.has(t.id) ? 'checked' : ''}> ${esc(t.nome)} <span class="tag">ao vivo</span></label>`).join('')
+        + `<details class="card"><summary>Outros tribunais (sem pesquisa ao vivo aqui)</summary><p class="mut">Esses sites bloqueiam consulta automática, não têm busca pública utilizável ou exigem captcha. Abra o portal oficial de jurisprudência de cada um:</p><p class="row">${J.inf.links.map(l => `<a class="btn sec" href="${esc(l.link)}" target="_blank" rel="noopener">${esc(l.nome)}</a>`).join('')}</p></details>`;
+      document.getElementById('jcont').textContent = '(' + J.selInf.size + ' selecionados)'; return;
+    }
+    if (!J.trib) return;
     el.innerHTML = '<p class="row"><button class="sec" data-ja="todos">Todos</button><button class="sec" data-ja="nenhum">Nenhum</button></p>' + GRUPOS.map(g => {
       const ts = J.trib.filter(t => t.grupo === g), n = ts.filter(t => J.sel.has(t.id)).length;
       return `<details class="card"><summary>${esc(g)} <span class="tag">${n}/${ts.length}</span></summary><p class="row"><button class="sec" data-ja="grupo" data-g="${esc(g)}" data-v="1">marcar todos</button><button class="sec" data-ja="grupo" data-g="${esc(g)}" data-v="0">limpar</button></p>
@@ -37,7 +52,7 @@
   }
 
   window.jurisInit = async function () {
-    try { J.trib = await api('/api/tribunais'); const s = await api('/api/status'); J.ia = s.ia; document.getElementById('jserv').innerHTML = ''; pintarTribunais(); pintarIA(); if (J.q) { document.getElementById('jq').value = J.q; pintarRes(); } }
+    try { J.trib = await api('/api/tribunais'); J.inf = await api('/api/informativos/tribunais'); pintarModo(); const s = await api('/api/status'); J.ia = s.ia; document.getElementById('jserv').innerHTML = ''; pintarTribunais(); pintarIA(); if (J.q) { document.getElementById('jq').value = J.q; pintarRes(); } }
     catch (e) { document.getElementById('jserv').innerHTML = '<div class="banner">⚠ Servidor de pesquisa não encontrado. Esta tela só funciona quando o app roda pelo servidor local: <code>python tools/servidor.py</code>. A versão publicada (GitHub Pages) não consegue consultar os tribunais.</div>'; document.getElementById('jtrib').innerHTML = ''; }
     pintarFav();
   };
@@ -45,9 +60,9 @@
   async function buscarUm(t, pagina) {
     J.st[t.id] = { carregando: true }; pintarRes();
     const f = J.f, u = new URLSearchParams({ t: t.id, q: J.q, p: pagina || 1 });
-    ['relator', 'classe', 'orgao', 'de', 'ate', 'tipo'].forEach(k => f[k] && u.set(k, f[k]));
+    (J.modo === 'inf' ? ['orgao'] : ['relator', 'classe', 'orgao', 'de', 'ate', 'tipo']).forEach(k => f[k] && u.set(k, f[k]));
     try {
-      const r = await api('/api/juris?' + u);
+      const r = await api((J.modo === 'inf' ? '/api/informativos?' : '/api/juris?') + u);
       J.st[t.id] = { ok: r.ok, total: r.total, erro: r.erro, ms: r.ms, link: r.link, pagina: pagina || 1 };
       J.res[t.id] = (pagina > 1 ? (J.res[t.id] || []) : []).concat(r.resultados || []);
     } catch (e) { J.st[t.id] = { ok: false, erro: String(e.message || e) }; }
@@ -59,7 +74,7 @@
     J.f = { relator: val('jrel'), classe: val('jcls'), orgao: val('jorgao'), de: val('jde'), ate: val('jate'), tipo: val('jtipo') };
     if (!J.q && !J.f.relator) return alert('Digite o que pesquisar.');
     J.res = {}; J.st = {}; J.sel_ia = new Set();
-    const lista = J.trib.filter(t => J.sel.has(t.id)); let i = 0;
+    const lista = (J.modo === 'inf' ? J.inf.ao_vivo.filter(t => J.selInf.has(t.id)) : J.trib.filter(t => J.sel.has(t.id))); let i = 0;
     const w = async () => { while (i < lista.length) await buscarUm(lista[i++]); };
     await Promise.all([w(), w(), w()]);  // no máx. 3 consultas simultâneas (respeita limites das fontes)
   }
@@ -72,6 +87,7 @@
       ${linha('Classe', r.classe)}${linha('Relator', r.relator)}${linha('Órgão', r.orgao_julgador)}${linha('Julgamento', r.data_julgamento)}${linha('Publicação', r.data_publicacao)}${linha('Ajuizamento', r.data_ajuizamento)}
       ${r.assuntos ? linha('Assuntos', r.assuntos.join('; ')) : ''}${r.palavras_chave ? linha('Palavras-chave', [].concat(r.palavras_chave).join('; ')) : ''}
       ${r.ementa ? `<div class="mut">Ementa</div><div style="${J.abertos.has(k) ? '' : 'max-height:7.5em;overflow:hidden'}">${esc(r.ementa)}</div><button class="sec" data-ja="exp" data-k="${esc(k)}">${J.abertos.has(k) ? 'Recolher' : 'Expandir ementa'}</button>` : `<div class="mut">${esc(r.disponibilidade || 'Sem ementa nesta fonte.')}</div>`}
+      ${r.trechos && r.trechos.length ? `<div class="mut">Trechos do informativo (${esc(r.periodo || '')})</div><ul>${r.trechos.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}
       ${r.legislacao_citada && J.abertos.has(k) ? `<div class="mut">Legislação citada</div><pre style="white-space:pre-wrap">${esc(r.legislacao_citada)}</pre>` : ''}
       <div class="mut" style="font-size:12px">Fonte: ${esc(r.fonte || '—')} · verificado em ${esc(r.verificado_em || '—')} · ${esc(r.disponibilidade || '')}</div>
       <p class="row">${r.inteiro_teor_url || r.url_origem ? `<a class="btn" href="${esc(r.inteiro_teor_url || r.url_origem)}" target="_blank" rel="noopener">Inteiro teor / fonte</a>` : ''}
@@ -83,7 +99,7 @@
   function pintarRes() {
     const el = document.getElementById('jres'); if (!el) return;
     const ids = Object.keys(J.st);
-    const stat = ids.map(id => { const t = J.trib.find(x => x.id === id), s = J.st[id];
+    const stat = ids.map(id => { const t = lista().find(x => x.id === id) || { nome: id }, s = J.st[id];
       const txt = s.carregando ? '⏳ consultando…' : s.ok ? `✅ ${s.total.toLocaleString('pt-BR')} encontrados${t.modo === 'metadados' ? ' (somente metadados)' : ''} · ${s.ms} ms` : `⚠ indisponível (${esc(s.erro || '')})`;
       return `<div class="card"><b>${esc(t.nome)}</b> — ${txt} ${s.link ? `<a href="${esc(s.link)}" target="_blank" rel="noopener">pesquisar no site oficial</a>` : ''}${s.ok && (J.res[id] || []).length < s.total ? ` <button class="sec" data-ja="mais" data-t="${id}">mais 10</button>` : ''}</div>`; }).join('');
     el.innerHTML = (ids.length ? '<h3>Resultados</h3>' : '') + stat + todos().map(card).join('');
@@ -164,7 +180,8 @@
     else if (a === 'todos') { J.trib.forEach(x => J.sel.add(x.id)); pintarTribunais(); }
     else if (a === 'nenhum') { J.sel.clear(); pintarTribunais(); }
     else if (a === 'grupo') { J.trib.filter(x => x.grupo === d.g).forEach(x => d.v === '1' ? J.sel.add(x.id) : J.sel.delete(x.id)); pintarTribunais(); }
-    else if (a === 'mais') buscarUm(J.trib.find(x => x.id === d.t), (J.st[d.t].pagina || 1) + 1);
+    else if (a === 'mais') buscarUm(lista().find(x => x.id === d.t), (J.st[d.t].pagina || 1) + 1);
+    else if (a === 'modo') { J.modo = d.m; J.res = {}; J.st = {}; J.sel_ia = new Set(); pintarModo(); pintarTribunais(); pintarRes(); }
     else if (a === 'exp') { J.abertos.has(d.k) ? J.abertos.delete(d.k) : J.abertos.add(d.k); pintarRes(); pintarFav(); }
     else if (a === 'fav') { const f = lsGet('favj', {}), r = todos().concat(Object.values(f)).find(x => key(x) === d.k); if (f[d.k]) delete f[d.k]; else if (r) f[d.k] = r; lsSet('favj', f); pintarRes(); pintarFav(); }
     else if (a === 'comp') { const r = todos().concat(Object.values(lsGet('favj', {}))).find(x => key(x) === d.k); if (!r) return; const tx = `${r.tribunal} — ${r.numero_processo}\n${r.ementa || ''}\n${r.inteiro_teor_url || r.url_origem || ''}`; if (navigator.share) navigator.share({ title: r.numero_processo, text: tx }).catch(() => { }); else if (navigator.clipboard) navigator.clipboard.writeText(tx).then(() => alert('Copiado.')); }
@@ -173,6 +190,7 @@
   });
   document.addEventListener('change', e => {
     const t = e.target;
+    if (t.matches('[data-jinf]')) { t.checked ? J.selInf.add(t.dataset.jinf) : J.selInf.delete(t.dataset.jinf); document.getElementById('jcont').textContent = '(' + J.selInf.size + ' selecionados)'; }
     if (t.matches('[data-jt]')) { t.checked ? J.sel.add(t.dataset.jt) : J.sel.delete(t.dataset.jt); document.getElementById('jcont').textContent = '(' + J.sel.size + ' selecionados)'; }
     if (t.matches('[data-jia]')) { t.checked ? J.sel_ia.add(t.dataset.jia) : J.sel_ia.delete(t.dataset.jia); pintarIA(); }
   });

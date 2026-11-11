@@ -133,6 +133,79 @@ def pesquisar(a):
     if ans["ok"]: cache_set(chave, ans)
     return ans
 
+# ---------------- Informativos ----------------
+INF = {"stf": ("STF – Informativo do Supremo Tribunal Federal", "https://jurisprudencia.stf.jus.br/pages/search?base=informativos&queryString={q}"),
+       "stj": ("STJ – Informativo de Jurisprudência do STJ", "https://processo.stj.jus.br/jurisprudencia/externo/informativo/?livre={q}")}
+INF_LINKS = [("TST", "https://jurisprudencia.tst.jus.br/"), ("TSE", "https://jurisprudencia.tse.jus.br/"), ("TJSC", "https://busca.tjsc.jus.br/jurisprudencia/"), ("TRF4", "https://jurisprudencia.trf4.jus.br/pesquisa/pesquisa.php"), ("TJSP", "https://esaj.tjsp.jus.br/cjsg/consultaCompleta.do")]
+def _inf_base(tid):
+    t = {"id": tid, "nome": INF[tid][0], "grupo": "Superiores"}; x = vazio(t); x["tipo_decisao"] = "Informativo de jurisprudência"; return x
+def _trechos(texto, q, n=3, raio=320):
+    termos = [w for w in re.findall(r"\w{4,}", q.lower()) if w not in ("para", "como", "mais")][:6]
+    base, out, usados = re.sub(r"\s+", " ", texto), [], []
+    low = base.lower()
+    for w in termos:
+        i = low.find(w)
+        while i >= 0 and len(out) < n:
+            if all(abs(i - u) > raio for u in usados):
+                usados.append(i); out.append(("…" if i > raio else "") + base[max(0, i - raio): i + raio] + "…")
+            i = low.find(w, i + raio)
+    return out
+def buscar_inf_stf(a):
+    q = a["q"].strip() or "*"
+    corpo = {"query": {"bool": {"must": [{"query_string": {"query": q, "default_operator": "AND"}}], "filter": [{"term": {"base": "informativos"}}]}}, "from": (a["p"] - 1) * 10, "size": 10,
+             "sort": [{"_score": "desc"}, {"publicacao_data": "desc"}], "_source": ["informativo_nome", "informativo_numero", "informativo_url", "publicacao_data", "periodo_inicio_data", "periodo_fim_data", "conteudo_texto"]}
+    r = http_json("https://jurisprudencia.stf.jus.br/api/search/search", corpo, {}, 60)["result"]["hits"]; out = []
+    for h in r["hits"]:
+        s = h["_source"]; x = _inf_base("stf")
+        x.update({"id_original": h.get("_id"), "numero_processo": s.get("informativo_nome"), "classe": "Informativo STF (edição)", "data_publicacao": s.get("publicacao_data"),
+                  "data_julgamento": None, "ementa": None, "trechos": _trechos(s.get("conteudo_texto") or "", a["q"]), "url_origem": s.get("informativo_url"), "inteiro_teor_url": s.get("informativo_url"),
+                  "assuntos": None, "disponibilidade": "edição completa no site do STF", "fonte": "API de pesquisa do portal de jurisprudência do STF (base 'informativos')",
+                  "periodo": "%s a %s" % (s.get("periodo_inicio_data"), s.get("periodo_fim_data"))})
+        out.append(x)
+    return out, r["total"]["value"]
+def _txt(h):
+    h = re.sub(r"(?s)<(script|style).*?</\1>", "", h); h = re.sub(r"(?i)</?(br|p|div)[^>]*>", "\n", h)
+    return re.sub(r"\n\s*\n+", "\n", re.sub(r"[ \t\r\f\v]+", " ", __import__("html").unescape(re.sub(r"<[^>]+>", "", h)))).strip()
+def buscar_inf_stj(a):
+    q = a["q"].strip()
+    if not q: raise ValueError("digite o que pesquisar")
+    pag = a["p"]; tam = min(100, 10 * pag)
+    d = {"b": "INFJ", "operador": "e", "thesaurus": "JURIDICO", "p": "true", "l": str(tam), "acao": "pesquisar", "refinar": "S INPATH(DISP)", "isPesquisaDefault": "false", "materia": "", "orgao": "", "ano": "", "relator": "", "dtdj": "", "dtde": "", "ordem": "", "livre": q}
+    if a.get("orgao"): d["orgao"] = a["orgao"]
+    url = "https://processo.stj.jus.br/jurisprudencia/externo/informativo/?" + urllib.parse.urlencode(d, encoding="iso-8859-1")
+    h = urllib.request.urlopen(urllib.request.Request(url, headers=UA), timeout=60).read().decode("iso-8859-1")
+    tot = re.search(r"Notas encontradas:</span>\s*<span[^>]*>(\d+)", h); total = int(tot.group(1)) if tot else 0
+    out, titulo, data = [], "", ""
+    for b in re.split(r'<div class="clsInformativoBlocoItem">', h)[1:]:
+        t = re.search(r'class="clsInformativoTitulo"><a\s+href="([^"]*)">(.*?)</a>', b, re.S)
+        if t:
+            tt = _txt(t.group(2)).split("\n"); titulo = re.sub(r"\s+", " ", " ".join(tt[:2])).strip(); data = tt[2].strip() if len(tt) > 2 else ""
+        org = re.search(r'class="clsInformativoOrgaojulgador">(.*?)</span>', b, re.S); nota = re.search(r'id="urlNota\d+">(.*?)</div>', b, re.S)
+        campos = {}
+        for l in re.finditer(r'<div class="divLinha">\s*<div class="divCell clsInformativoLabel">(.*?)</div>\s*<div class="divCell clsInformativoTexto">(.*?)</div>\s*</div>', b, re.S):
+            campos[_txt(re.sub(r'(?s)<div class="clsCheckSelecionaNota">.*?</div>', "", l.group(1)))] = _txt(l.group(2))
+        x = _inf_base("stj"); proc = campos.get("Processo")
+        x.update({"id_original": (nota.group(1).strip() if nota else None), "numero_processo": (proc or titulo)[:160], "classe": titulo, "orgao_julgador": _txt(org.group(1)) if org else None,
+                  "data_publicacao": data or None, "ementa": "\n\n".join(f"{k}: {v}" for k, v in campos.items() if k not in ("Processo",)) or None, "assuntos": [campos["Ramo do Direito"]] if campos.get("Ramo do Direito") else None,
+                  "palavras_chave": [campos["Tema"]] if campos.get("Tema") else None, "legislacao_citada": campos.get("Legislação"), "precedente_qualificado": ("RQF" in (proc or "") or "Tema" in (proc or "")) or None,
+                  "url_origem": "https://processo.stj.jus.br/jurisprudencia/externo/informativo/?livre=" + urllib.parse.quote(nota.group(1).split("livre=")[-1] if nota else ""),
+                  "disponibilidade": "nota do Informativo de Jurisprudência do STJ", "fonte": "Informativo de Jurisprudência do STJ (processo.stj.jus.br)"})
+        out.append(x)
+    return out[10 * (pag - 1):], total
+def pesquisar_inf(a):
+    tid = a["t"]
+    if tid not in INF: raise ValueError("informativo não disponível para pesquisa ao vivo")
+    chave = json.dumps(["inf", a, tid], sort_keys=True); c = cache_get(chave)
+    if c: return c
+    ini = time.time(); link = INF[tid][1].replace("{q}", urllib.parse.quote(a["q"]))
+    try:
+        res, total = buscar_inf_stf(a) if tid == "stf" else buscar_inf_stj(a)
+        ans = {"tribunal": tid, "ok": True, "total": total, "resultados": res, "ms": int((time.time() - ini) * 1000), "modo": "informativo", "link": link}
+    except Exception as e:
+        ans = {"tribunal": tid, "ok": False, "erro": "%s: %s" % (type(e).__name__, str(e)[:160]), "resultados": [], "total": 0, "ms": int((time.time() - ini) * 1000), "modo": "informativo", "link": link}
+    if ans["ok"]: cache_set(chave, ans)
+    return ans
+
 # ---------------- IA (opcional) ----------------
 SISTEMA = ("Você é um assistente de estudo de Direito brasileiro. Trabalhe SOMENTE com as decisões fornecidas no JSON. "
            "Cite sempre tribunal e número do processo de cada decisão que usar. Não invente precedentes, números, datas, teses ou dispositivos que não estejam nos textos. "
@@ -167,6 +240,11 @@ class H(SimpleHTTPRequestHandler):
         u = urllib.parse.urlparse(s.path)
         if u.path == "/api/tribunais": return s._json([{k: v for k, v in t.items() if k != "alias"} for t in TRIB.values()])
         if u.path == "/api/status": return s._json({"ia": bool(os.environ.get("ANTHROPIC_API_KEY"))})
+        if u.path == "/api/informativos/tribunais": return s._json({"ao_vivo": [{"id": k, "nome": v[0], "link": v[1]} for k, v in INF.items()], "links": [{"nome": n, "link": l} for n, l in INF_LINKS]})
+        if u.path == "/api/informativos":
+            q = {k: v[0] for k, v in urllib.parse.parse_qs(u.query).items()}
+            try: return s._json(pesquisar_inf({"t": q.get("t", ""), "q": q.get("q", ""), "p": max(1, int(q.get("p", "1"))), "orgao": q.get("orgao")}))
+            except ValueError as e: return s._json({"erro": str(e)}, 400)
         if u.path == "/api/juris":
             q = {k: v[0] for k, v in urllib.parse.parse_qs(u.query).items()}
             try: a = {"t": q.get("t", ""), "q": q.get("q", ""), "p": max(1, int(q.get("p", "1"))), "relator": q.get("relator"), "classe": q.get("classe"), "orgao": q.get("orgao"), "de": q.get("de"), "ate": q.get("ate"), "tipo": q.get("tipo")}
