@@ -189,7 +189,7 @@ const VIEWS = {
   },
 
   sumulas(mod) { return listaJuris(mod, 'sumulas', x => `<b>${esc(x.tribunal === 'STF-SV' ? 'Súmula Vinculante' : 'Súmula ' + x.tribunal)} ${esc(x.n)}</b> ${x.vinculante ? '<span class="tag">vinculante</span>' : ''}${x.materia && x.materia !== 'Geral' && _sa(x.materia) !== _sa(ramoDe(x)) ? `<span class="tag">${esc(x.materia)}</span>` : ''}${x.orgao ? `<span class="tag">${esc(x.orgao)}${x.data ? ' · ' + esc(x.data) : ''}</span>` : ''}`, x => x.texto); },
-  enunciados(mod) { return listaJuris(mod, 'enunciados', x => `<b>${esc(x.fonte)} · Enunc. ${esc(x.n)}</b><span class="tag">${esc(x.materia)}</span>`, x => x.texto); },
+  enunciados(mod) { return listaJuris(mod, 'enunciados', x => `<b>${esc(x.fonte)} · Enunc. ${esc(x.n)}</b>${x.materia ? `<span class="tag">${esc(x.materia)}</span>` : ''}`, x => x.texto); },
   juris(mod) { return '<div class="card"><a class="btn" href="#/jurisprudencia">⚖️ Pesquisar jurisprudência ao vivo nos tribunais</a></div>' + listaJuris(mod, 'juris', x => `<b>${esc(x.tribunal)}</b> — ${esc(x.ref)}<span class="tag">${esc(x.materia)}</span>`, x => x.tese); },
 
   principios(mod) {
@@ -306,31 +306,32 @@ const chaveHeat = (key, x) => key === 'sumulas' ? 's|' + x.tribunal + '|' + x.n 
 // ---- Ramo do direito das súmulas ----
 const _sa = t => String(t || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 const RAMO_REGRAS = [['Consumidor', /consumidor|\bcdc\b|fornecedor/], ['Eleitoral', /eleitor|candidat|partido politic|eleicoes/], ['Previdenciário', /previdenci|aposentad|beneficio|pensao por morte|salario-maternidade|\binss\b|auxilio-doenca|\bloas\b/],
-  ['Tributário', /tribut|imposto|\bicms\b|\biss\b|\bipi\b|\biptu\b|\bipva\b|\bpis\b|cofins|fisco|fiscal|contribuicao (social|de melhoria|previdenciaria)|taxa\b|alfandeg/], ['Trabalhista', /trabalhist|empregad|\bclt\b|justica do trabalho|\bfgts\b|rescisao|horas extras|sindical|sindicato/],
+  ['Tributário', /tribut|imposto|\bicms\b|\biss\b|\bipi\b|\biptu\b|\bipva\b|\bpis\b|cofins|fisco|fiscal|contribuicao (social|de melhoria|previdenciaria)|taxa\b|alfandeg/], ['Administrativo', /servidor|militares do estado|policiais? militar|gratificacao|licenca|vantagens pecuniarias|auxilio-alimentacao/], ['Trabalhista', /trabalhist|empregad|\bclt\b|justica do trabalho|\bfgts\b|rescisao|horas extras|sindical|sindicato/],
   ['Empresarial', /falencia|recuperacao judicial|sociedade (anonima|empresaria|limitada)|titulo de credito|cheque|duplicata|nota promissoria|marca\b|patente|arrendamento mercantil/], ['Administrativo', /servidor|concurso publico|licitac|administracao publica|ato administrativo|desapropria|improbidade|agente publico|policial militar/],
   ['Constitucional', /constitu|direitos fundamentais|mandado de (seguranca|injuncao)|extradicao|repercussao geral|\bstf\b|supremo/], ['Processual Penal', /habeas corpus|inquerito|denuncia|pronuncia|\bjuri\b|acao penal|prisao preventiva|liberdade provisoria|queixa-crime|justica criminal|juizo criminal|recurso em sentido estrito/],
-  ['Penal', /crime|\bpena\b|penal|furto|roubo|trafico|homicid|reincidencia|regime (fechado|semiaberto|aberto)|dosimetria|falta grave|livramento condicional|execucao penal/], ['Civil', /contrato|indeniza|dano moral|responsabilidade civil|posse\b|propriedade|usucapi|familia|alimentos|heranca|locacao|seguro|condominio|casamento|uniao estavel|filiacao/],
-  ['Processual Civil', /recurso|apelacao|agravo|embargos|execucao|penhora|citacao|competencia|honorarios|liminar|tutela|acao rescisoria|coisa julgada|cumprimento de sentenca|jurisdicao|prazo/]];
+  ['Penal', /crime|\bpena\b|penal|furto|roubo|trafico|homicid|reincidencia|regime (fechado|semiaberto|aberto)|dosimetria|falta grave|livramento condicional|execucao penal|progressao de regime|exame criminologico|remicao|saida temporaria|sentenciado|condenado|albergue|regime prisional/], ['Civil', /contrato|indeniza|dano|cheque|bagagem|transporte aereo|cobertura securitaria|juros de mora|responsabilidade civil|posse\b|propriedade|usucapi|familia|alimentos|heranca|locacao|seguro|condominio|casamento|uniao estavel|filiacao/],
+  ['Processual Civil', /arbitrag|mediacao|juizados especiais|recurso|apelacao|agravo|embargos|execucao|penhora|citacao|competencia|honorarios|liminar|tutela|acao rescisoria|coisa julgada|cumprimento de sentenca|jurisdicao|prazo/]];
 const RAMO_MAP = { 'processo civil': 'Processual Civil', 'processo penal': 'Processual Penal', 'processual do trabalho': 'Processual do Trabalho', 'do consumidor': 'Consumidor', 'da crianca e do adolescente': 'ECA' };
 const RAMO_NOMES = ['Tributário', 'Previdenciário', 'Empresarial', 'Constitucional', 'Administrativo', 'Processual Civil', 'Processual Penal', 'Civil', 'Penal', 'Militar', 'Eleitoral', 'Ambiental', 'Bancário', 'Consumidor', 'Trabalhista', 'Internacional', 'Processual do Trabalho'];
 function ramoDe(x) {
   if (x._ramo) return x._ramo;
   let r = String(x.ramo || '').trim(), auto = false;
   if (!r && x.materia && x.materia !== 'Geral') r = String(x.materia).split(/\s[–-]\s/)[0].trim();
+  if (r && x.ramo_auto) auto = true;
   if (r) { const k = _sa(r.split(/\s*[(/]/)[0]).replace(/^direito\s+/, '').trim(); r = RAMO_MAP[k] || RAMO_NOMES.find(o => _sa(o) === k) || (k ? k.charAt(0).toUpperCase() + k.slice(1) : ''); }
   if (!r) { const t = _sa(x.texto); const reg = RAMO_REGRAS.find(([, rx]) => rx.test(t)); r = reg ? reg[0] : 'Sem classificação'; auto = true; }
   x._ramo = r; x._auto = auto; return r;
 }
-const SGRUPOS = [['STF-SV', 'Súmulas Vinculantes (STF)'], ['STF', 'Súmulas do STF'], ['STJ', 'Súmulas do STJ'], ['TST', 'Súmulas do TST'], ['TSE', 'Súmulas do TSE'], ['STM', 'Súmulas do STM']];
+const SGRUPOS = [['STF-SV', 'Súmulas Vinculantes (STF)'], ['STF', 'Súmulas do STF'], ['STJ', 'Súmulas do STJ'], ['TST', 'Súmulas do TST'], ['TSE', 'Súmulas do TSE'], ['STM', 'Súmulas do STM'], ['TJSC', 'Súmulas do TJSC']];
 function listaJuris(mod, key, head, body) {
   let it = DATA[key].filter(x => inMod(x, mod.id)).map(x => ({ x, s: score(Object.assign(x, { _k: chaveHeat(key, x) }), null, mod.id) }));
   let chips = '', ordem = 'num';
   if (key === 'sumulas') {
     const cont = {}; it.forEach(({ x }) => cont[x.tribunal] = (cont[x.tribunal] || 0) + 1);
-    const sel = new Set(store.get('sgrp', null) || SGRUPOS.map(g => g[0]));
+    const offG = new Set(store.get('sgoff', [])), sel = { has: g => !offG.has(g) };
     const noGrupo = it.filter(({ x }) => sel.has(x.tribunal));
     const ramos = {}; noGrupo.forEach(({ x }) => { const r = ramoDe(x); ramos[r] = (ramos[r] || 0) + 1; });
-    const sr = store.get('sram', null), selR = sr ? new Set(sr) : null, sit = store.get('ssit', 'todas'); ordem = store.get('sord', 'num');
+    const offR = new Set(store.get('sroff', [])), selR = { has: r => !offR.has(r) }, sit = store.get('ssit', 'todas'); ordem = store.get('sord', 'num');
     const vigente = x => !x.situacao || x.situacao === 'Vigente';
     chips = `<div class="card"><b>Grupos de súmulas</b> <span class="mut">(marque os que quer estudar)</span><div class="row">${SGRUPOS.map(([g, n]) => cont[g] ? `<button class="${sel.has(g) ? '' : 'sec'}" data-act="sg" data-g="${g}">${sel.has(g) ? '✓ ' : ''}${n} (${cont[g]})</button>` : `<button class="sec" disabled title="Sem itens: o site do tribunal bloqueia leitura automática. Importe com tools/importar_sumulas_csv.py">${n} (0)</button>`).join('')}</div>
       <p class="row"><button class="sec" data-act="sgall" data-v="1">Todos</button><button class="sec" data-act="sgall" data-v="0">Nenhum</button></p>
@@ -341,11 +342,27 @@ function listaJuris(mod, key, head, body) {
       <p class="mut">Os ramos do STF (CSV do portal) e do STJ (lista oficial) vêm das próprias fontes; onde a fonte não informa (Súmulas Vinculantes, STJ a partir da 650), o ramo é <b>classificação automática por palavras-chave</b> (marcada "auto") e pode errar.</p></div>`;
     it = noGrupo.filter(({ x }) => (!selR || selR.has(ramoDe(x))) && (sit === 'todas' || (sit === 'vigentes' ? vigente(x) : !vigente(x))));
   }
+  if (key === 'enunciados') {
+    const fontes = {}; it.forEach(({ x }) => fontes[x.fonte] = (fontes[x.fonte] || 0) + 1);
+    const offF = new Set(store.get('egoff', [])), selF = { has: f => !offF.has(f) }, noGrupo = it.filter(({ x }) => !selF || selF.has(x.fonte));
+    const ramos = {}; noGrupo.forEach(({ x }) => { const r = ramoDe(x); ramos[r] = (ramos[r] || 0) + 1; });
+    const offR = new Set(store.get('eroff', [])), selR = { has: r => !offR.has(r) }, sit = store.get('esit', 'todas'); ordem = store.get('eord', 'num');
+    const vigente = x => !x.situacao || x.situacao === 'Vigente';
+    chips = `<div class="card"><b>Origem dos enunciados</b> <span class="mut">(marque os que quer estudar)</span><div class="row">${Object.entries(fontes).sort().map(([f, n]) => `<button class="${!selF || selF.has(f) ? '' : 'sec'}" data-act="eg" data-f="${esc(f)}">${!selF || selF.has(f) ? '✓ ' : ''}${esc(f.replace(/^TJSC – /, 'TJSC: '))} (${n})</button>`).join('')}</div>
+      <p class="row"><button class="sec" data-act="egall" data-v="1">Todas</button><button class="sec" data-act="egall" data-v="0">Nenhuma</button></p>
+      <b>Ramo do direito</b><div class="row">${Object.entries(ramos).sort((a, b) => a[0] === 'Sem classificação' ? 1 : b[0] === 'Sem classificação' ? -1 : b[1] - a[1]).map(([r, n]) => `<button class="${!selR || selR.has(r) ? '' : 'sec'}" data-act="er" data-r="${esc(r)}">${!selR || selR.has(r) ? '✓ ' : ''}${esc(r)} (${n})</button>`).join('')}</div>
+      <p class="row"><button class="sec" data-act="erall" data-v="1">Todos os ramos</button><button class="sec" data-act="erall" data-v="0">Nenhum</button>
+      <select data-act="esit" aria-label="situação"><option value="todas" ${sit === 'todas' ? 'selected' : ''}>Todas as situações</option><option value="vigentes" ${sit === 'vigentes' ? 'selected' : ''}>Só vigentes</option><option value="outras" ${sit === 'outras' ? 'selected' : ''}>Revogados ou cancelados</option></select>
+      <select data-act="eord" aria-label="ordem"><option value="num" ${ordem === 'num' ? 'selected' : ''}>Por origem e número</option><option value="ramo" ${ordem === 'ramo' ? 'selected' : ''}>Agrupar por ramo do direito</option><option value="heat" ${ordem === 'heat' ? 'selected' : ''}>Mais cobrados (estrelas)</option></select></p>
+      <p class="mut">O ramo dos enunciados é <b>classificação automática por palavras-chave</b> (marcada "auto") e pode errar.</p></div>`;
+    it = noGrupo.filter(({ x }) => (!selR || selR.has(ramoDe(x))) && (sit === 'todas' || (sit === 'vigentes' ? vigente(x) : !vigente(x))));
+    it.sort((a, b) => ordem === 'heat' ? b.s - a.s : ordem === 'ramo' ? ramoDe(a.x).localeCompare(ramoDe(b.x)) || a.x.fonte.localeCompare(b.x.fonte) || (a.x.ord || 0) - (b.x.ord || 0) : a.x.fonte.localeCompare(b.x.fonte) || (a.x.ord || parseInt(a.x.n) || 0) - (b.x.ord || parseInt(b.x.n) || 0));
+  }
   const num = x => parseInt(x.n) || 0, trib = (a, b) => (a.x.tribunal > b.x.tribunal ? 1 : a.x.tribunal < b.x.tribunal ? -1 : 0);
   const cmp = { numd: (a, b) => trib(a, b) || num(b.x) - num(a.x), ramo: (a, b) => ramoDe(a.x).localeCompare(ramoDe(b.x)) || trib(a, b) || num(a.x) - num(b.x), heat: (a, b) => b.s - a.s };
-  if (key !== 'sumulas') it.sort((a, b) => b.s - a.s); else if (cmp[ordem]) it.sort(cmp[ordem]);
-  const extra = x => key === 'sumulas' ? `${x.situacao && x.situacao !== 'Vigente' ? `<span class="tag" style="background:#c0392b;color:#fff">${esc(x.situacao)}</span>` : ''}<span class="tag">${esc(ramoDe(x))}${x._auto ? ' (auto)' : ''}</span>` : '';
-  const corpo = x => key === 'sumulas' && x.obs ? `<div class="mut">${esc(x.obs)}</div>` : '';
+  if (key === 'sumulas') { if (cmp[ordem]) it.sort(cmp[ordem]); } else if (key !== 'enunciados') it.sort((a, b) => b.s - a.s);
+  const extra = x => (key === 'sumulas' || key === 'enunciados') ? `${x.situacao && x.situacao !== 'Vigente' ? `<span class="tag" style="background:#c0392b;color:#fff">${esc(x.situacao)}</span>` : ''}<span class="tag">${esc(ramoDe(x))}${x._auto ? ' (auto)' : ''}</span>` : '';
+  const corpo = x => (key === 'sumulas' || key === 'enunciados') && x.obs ? `<div class="mut">${esc(x.obs)}</div>` : '';
   return `${demoBanner()}${legend()}${filterBox('Filtrar…')}${chips}<p class="mut">${it.length} item(ns)</p>${it.map(({ x, s }) => `<div class="art h${s}" data-item data-score="${s}">${head(x)}${extra(x)} ${stars(s)} ${s ? heatBadge(s) : ''}<div>${esc(body(x))}</div>${corpo(x)}</div>`).join('') || '<p class="mut">Sem itens.</p>'}`;
 }
 
@@ -376,10 +393,14 @@ document.addEventListener('click', e => {
       store.set('errcards', ec); delete cs[id]; store.set('cards', cs);
     }
     rerender(); }
-  else if (a === 'sg') { const sel = new Set(store.get('sgrp', null) || SGRUPOS.map(g => g[0])); sel.has(d.g) ? sel.delete(d.g) : sel.add(d.g); store.set('sgrp', [...sel]); rerender(); }
-  else if (a === 'sgall') { store.set('sgrp', d.v === '1' ? SGRUPOS.map(g => g[0]) : []); rerender(); }
-  else if (a === 'sr') { const todos = [...new Set(DATA.sumulas.map(ramoDe))]; const cur = new Set(store.get('sram', null) || todos); cur.has(d.r) ? cur.delete(d.r) : cur.add(d.r); store.set('sram', [...cur]); rerender(); }
-  else if (a === 'srall') { store.set('sram', d.v === '1' ? null : []); rerender(); }
+  else if (a === 'sg') { const off = new Set(store.get('sgoff', [])); off.has(d.g) ? off.delete(d.g) : off.add(d.g); store.set('sgoff', [...off]); rerender(); }
+  else if (a === 'sgall') { store.set('sgoff', d.v === '1' ? [] : SGRUPOS.map(g => g[0])); rerender(); }
+  else if (a === 'sr') { const off = new Set(store.get('sroff', [])); off.has(d.r) ? off.delete(d.r) : off.add(d.r); store.set('sroff', [...off]); rerender(); }
+  else if (a === 'srall') { store.set('sroff', d.v === '1' ? [] : [...new Set(DATA.sumulas.map(ramoDe))]); rerender(); }
+  else if (a === 'eg') { const off = new Set(store.get('egoff', [])); off.has(d.f) ? off.delete(d.f) : off.add(d.f); store.set('egoff', [...off]); rerender(); }
+  else if (a === 'egall') { store.set('egoff', d.v === '1' ? [] : [...new Set(DATA.enunciados.map(x => x.fonte))]); rerender(); }
+  else if (a === 'er') { const off = new Set(store.get('eroff', [])); off.has(d.r) ? off.delete(d.r) : off.add(d.r); store.set('eroff', [...off]); rerender(); }
+  else if (a === 'erall') { store.set('eroff', d.v === '1' ? [] : [...new Set(DATA.enunciados.map(ramoDe))]); rerender(); }
   else if (a === 'dload') carregarDoutrina(d.id);
   else if (a === 'dread') { const l = store.get('dread', {}); l[d.id] ? delete l[d.id] : (l[d.id] = 1); store.set('dread', l); const open = [...document.querySelectorAll('details[open]')].map(e => e.dataset.id || e.querySelector('summary')?.textContent.slice(0, 20)); rerender(); document.querySelectorAll('details').forEach(e => { if (open.includes(e.dataset.id || e.querySelector('summary')?.textContent.slice(0, 20))) e.open = true; }); }
   else if (a === 'dup') { state.dup = !state.dup; rerender(); }
@@ -397,6 +418,8 @@ document.addEventListener('input', e => {
 });
 document.addEventListener('change', e => {
   const t = e.target;
+  if (t.matches('[data-act=esit]')) { store.set('esit', t.value); const y = window.scrollY; route(); window.scrollTo(0, y); }
+  if (t.matches('[data-act=eord]')) { store.set('eord', t.value); const y = window.scrollY; route(); window.scrollTo(0, y); }
   if (t.matches('[data-act=ssit]')) { store.set('ssit', t.value); const y = window.scrollY; route(); window.scrollTo(0, y); }
   if (t.matches('[data-act=sord]')) { store.set('sord', t.value); const y = window.scrollY; route(); window.scrollTo(0, y); }
   if (t.matches('[data-chk]')) store.set('chk.' + t.dataset.chk, t.checked);
