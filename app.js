@@ -51,6 +51,8 @@ function route() {
       <nav class="tabs">${TABS.map(([k, n]) => `<a href="#/m/${mod.id}/${k}" class="${k === tab ? 'on' : ''}">${n}</a>`).join('')}</nav>
       <div id="tab">${VIEWS[tab](mod)}</div>`;
     const on = app.querySelector('.tabs a.on'); on && on.scrollIntoView({ inline: 'center', block: 'nearest' });
+  } else if (p1 === 'jurisprudencia') {
+    app.innerHTML = window.jurisView ? jurisView() : '<p>Módulo indisponível.</p>'; window.jurisInit && jurisInit();
   } else if (p1 === 'busca') {
     app.innerHTML = buscaView();
   } else if (p1 === 'novidades') {
@@ -72,7 +74,7 @@ function home() {
     <p>✅ Questões respondidas: <b>${ans.length}</b> · Acertos: <b>${ans.length ? Math.round(100 * ok / ans.length) : 0}%</b></p>
     <div class="bar"><i style="width:${DATA.questoes.length ? Math.round(100 * ans.length / DATA.questoes.length) : 0}%"></i></div></div>
   ${statusAtualizacao()}
-  <p><a href="#/busca">🔎 Pesquisar</a> · <a href="#/novidades">🔔 Novidades</a> · <a href="#/backup">Backup / restaurar progresso</a></p>`;
+  <p><a href="#/jurisprudencia">⚖️ Pesquisar jurisprudência</a> · <a href="#/busca">🔎 Pesquisar nos documentos</a> · <a href="#/novidades">🔔 Novidades</a> · <a href="#/backup">Backup / restaurar progresso</a></p>`;
 }
 
 const _alt = (() => { const m = {}; (window.CHANGELOG || []).forEach(e => e.tipo === 'lei' && (e.alterados.concat(e.novos)).forEach(n => ((m[e.id] = m[e.id] || {})[n] = e.data))); return m; })();
@@ -117,17 +119,19 @@ function exportar(id, fmt) {
 function biblioteca() {
   const idx = window.DOUTRINA_IDX; if (!idx || !idx.length) return '';
   const lido = store.get('dread', {}), mostrar = state.dup, byId = Object.fromEntries(idx.map(x => [x.id, x]));
-  const nLido = idx.filter(x => lido[x.id]).length, nDup = idx.filter(x => x.status === 'dup').length;
-  const discs = [...new Set(idx.map(x => x.disc))];
+  const vis = idx.filter(x => mostrar || x.status !== 'dup'), nLido = idx.filter(x => lido[x.id]).length, nDup = idx.filter(x => x.status === 'dup').length;
   const item = x => {
     const par = x.parecidos.map(id => byId[id]), jaLido = par.find(p => lido[p.id]);
-    const aviso = x.status === 'dup' ? `<div class="banner">⚠ Cobre o mesmo assunto de: ${par.map(p => esc(p.titulo.slice(0, 70))).join(' · ')}. ${jaLido ? '<b>✅ Assunto já estudado em outro fascículo.</b>' : ''}</div>` : (x.status === 'manter' ? '<span class="tag">versão mais completa do grupo</span>' : '');
-    return `<details class="card" data-item data-id="${x.id}"><summary>${esc(x.titulo)} <span class="tag">${x.paginas} pág.</span>${lido[x.id] ? '<span class="tag">✅ lido</span>' : ''}${x.status === 'dup' ? '<span class="tag">possível duplicata</span>' : ''}</summary>${aviso}
-      <p class="row"><button data-act="dread" data-id="${x.id}">${lido[x.id] ? 'Marcar como não lido' : 'Marcar como lido'}</button><span class="mut">${esc(x.origem)}</span></p><div id="d-${x.id}"><button class="sec" data-act="dload" data-id="${x.id}">Carregar texto</button></div></details>`;
+    const aviso = x.status === 'dup' ? `<div class="banner">⚠ Mesmo assunto de: ${par.map(p => esc(p.titulo.slice(0, 80))).join(' · ')}. ${jaLido ? '<b>✅ Assunto já estudado em outro material.</b>' : ''}</div>` : '';
+    return `<details class="card" data-item data-id="${x.id}"><summary>${esc(x.titulo)} <span class="tag">${x.paginas} pág.</span>${lido[x.id] ? '<span class="tag">✅ lido</span>' : ''}${x.status === 'dup' ? '<span class="tag">repetido</span>' : ''}</summary>${aviso}
+      <p class="row"><button data-act="dread" data-id="${x.id}">${lido[x.id] ? 'Marcar como não lido' : 'Marcar como lido'}</button></p><div id="d-${x.id}"><button class="sec" data-act="dload" data-id="${x.id}">Abrir texto</button></div></details>`;
   };
-  return `<div class="card"><h3>📖 Doutrina própria (${idx.length} fascículos)</h3><p class="mut">Lidos: <b>${nLido}</b>. ${nDup} fascículos foram marcados como possível repetição de outro (auditoria por similaridade de conteúdo). Nada foi apagado.</p>
-    <button class="sec" data-act="dup">${mostrar ? 'Ocultar' : 'Mostrar'} possíveis duplicatas</button></div>`
-    + discs.map(d => `<details class="card"><summary><b>${esc(d)}</b> <span class="tag">${idx.filter(x => x.disc === d).length}</span></summary>${idx.filter(x => x.disc === d && (mostrar || x.status !== 'dup')).map(item).join('')}</details>`).join('');
+  const porDisc = {}; vis.forEach(x => ((porDisc[x.disc] = porDisc[x.disc] || {})[x.materia] = (porDisc[x.disc][x.materia] || [])).push(x));
+  const nome = d => d.replace(/^DIREITO /, 'Direito ').replace('PROCESSUAL', 'Processual').replace('CIVIL', 'Civil').replace('PENAL', 'Penal').replace('CONSTITUCIONAL', 'Direito Constitucional').replace('ADMINISTRATIVO', 'Administrativo').replace('EMPRESARIAL', 'Empresarial').replace('DO CONSUMIDOR', 'do Consumidor');
+  return `<div class="card"><h3>📖 Doutrina própria (${vis.length} títulos)</h3><p class="mut">Lidos: <b>${nLido}</b>. ${nDup} títulos repetem o assunto de outro e ficam ocultos${mostrar ? ' (agora visíveis)' : ''}. Nada foi apagado.</p>
+    <button class="sec" data-act="dup">${mostrar ? 'Ocultar' : 'Mostrar'} repetidos</button></div>`
+    + Object.entries(porDisc).map(([d, ms]) => `<details class="card"><summary><b>${esc(nome(d))}</b> <span class="tag">${Object.values(ms).flat().length}</span></summary>
+      ${Object.entries(ms).map(([m, xs]) => `<details class="card"><summary>${esc(m)} <span class="tag">${xs.length}</span></summary>${xs.sort((a, b) => a.ordem - b.ordem || a.titulo.localeCompare(b.titulo)).map(item).join('')}</details>`).join('')}</details>`).join('');
 }
 function carregarDoutrina(id) {
   const box = document.getElementById('d-' + id); if (!box) return;
@@ -170,9 +174,9 @@ const VIEWS = {
       ${l.artigos.map(a => { const s = score(a, l.id, mod.id); return `<div class="art h${s}" data-item data-score="${s}"><b class="n">Art. ${esc(a.n)}</b>${/^\s*\((Revogad|Vetad)/i.test(a.t) ? '<span class="tag" style="background:#c0392b;color:#fff">não vigente</span>' : ''}${(_alt[l.id] || {})[a.n] ? `<span class="tag">alterado em ${_alt[l.id][a.n]}</span>` : ''}${stars(s)} ${s ? heatBadge(s) : ''}<div>${esc(a.t)}</div></div>`; }).join('')}</details>`).join('') || '<p>Sem leis para este módulo.</p>'}`;
   },
 
-  sumulas(mod) { return listaJuris(mod, 'sumulas', x => `<b>${esc(x.tribunal === 'STF-SV' ? 'Súmula Vinculante' : 'Súmula ' + x.tribunal)} ${esc(x.n)}</b> ${x.vinculante ? '<span class="tag">vinculante</span>' : ''}<span class="tag">${esc(x.materia)}</span>`, x => x.texto); },
+  sumulas(mod) { return listaJuris(mod, 'sumulas', x => `<b>${esc(x.tribunal === 'STF-SV' ? 'Súmula Vinculante' : 'Súmula ' + x.tribunal)} ${esc(x.n)}</b> ${x.vinculante ? '<span class="tag">vinculante</span>' : ''}<span class="tag">${esc(x.materia)}</span>${x.orgao ? `<span class="tag">${esc(x.orgao)}${x.data ? ' · ' + esc(x.data) : ''}</span>` : ''}`, x => x.texto); },
   enunciados(mod) { return listaJuris(mod, 'enunciados', x => `<b>${esc(x.fonte)} · Enunc. ${esc(x.n)}</b><span class="tag">${esc(x.materia)}</span>`, x => x.texto); },
-  juris(mod) { return listaJuris(mod, 'juris', x => `<b>${esc(x.tribunal)}</b> — ${esc(x.ref)}<span class="tag">${esc(x.materia)}</span>`, x => x.tese); },
+  juris(mod) { return '<div class="card"><a class="btn" href="#/jurisprudencia">⚖️ Pesquisar jurisprudência ao vivo nos tribunais</a></div>' + listaJuris(mod, 'juris', x => `<b>${esc(x.tribunal)}</b> — ${esc(x.ref)}<span class="tag">${esc(x.materia)}</span>`, x => x.tese); },
 
   principios(mod) {
     const it = DATA.principios.filter(x => inMod(x, mod.id));
@@ -317,7 +321,7 @@ function loadScript(src) { return new Promise(r => { const s = document.createEl
   (window.JUR_IMPORT || []).flat().forEach(x => {
     const k = x.tribunal + '|' + x.n, ex = idx.get(k);
     if (ex) Object.assign(ex, { texto: x.texto, vinculante: x.vinculante || ex.vinculante });
-    else { const o = { tribunal: x.tribunal, n: x.n, materia: 'Geral', texto: x.texto, vinculante: x.vinculante, mods: ALLM, f: {} }; DATA.sumulas.push(o); idx.set(k, o); }
+    else { const o = { tribunal: x.tribunal, n: x.n, materia: x.materia || 'Geral', texto: x.texto, vinculante: x.vinculante, orgao: x.orgao, data: x.data, mods: ALLM, f: {} }; DATA.sumulas.push(o); idx.set(k, o); }
   });
   DATA.sumulas.sort((a, b) => (a.tribunal > b.tribunal ? 1 : a.tribunal < b.tribunal ? -1 : (parseInt(a.n) || 0) - (parseInt(b.n) || 0)));
   route();

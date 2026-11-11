@@ -47,3 +47,16 @@ Todos os textos de amostra devem ser **conferidos** com a fonte oficial antes de
 - Teses do STJ: `python tools/importar_stj.py [meses]` lê os Dados Abertos do STJ (espelhos de acórdãos) e importa os acórdãos que têm tese jurídica ou tema (379 em 12 meses, matéria agrupada por seção/turma). Entra no atualizador diário. Não são todos os acórdãos nem súmulas do STJ.
 - Ainda NÃO implementado: súmulas do STJ, LexML, DataJud/TJSC, legislação estadual/municipal em massa, jurisprudência por dispositivo, IA com fontes.
 - TJSC / TRF4: o portal do TJSC classifica acesso automatizado como bot e bloqueia ("Bloqueio temporário"); não contornei. Copie as ementas/teses que quiser estudar para `dados/juris_tjsc.csv` (modelo em `dados/juris_modelo.csv`) e rode `python tools/importar_juris_csv.py dados/juris_tjsc.csv tjsc` (para o TRF4 use o nome `trf4`).
+
+## Pesquisa de jurisprudência ao vivo (sem armazenar)
+Rode `tools/iniciar_app.bat` (ou `python tools/servidor.py`): o servidor local serve o app e consulta os tribunais na hora, sem guardar as decisões (só os favoritos, neste aparelho). Tela ⚖️ no topo do app.
+- **Texto completo:** STF (API pública do portal; ementa, relator, órgão, datas, legislação citada, precedente qualificado, link do inteiro teor).
+- **Metadados (DataJud/CNJ):** STJ, TST, TSE, STM, 27 TJs + TJDFT, 6 TRFs, 24 TRTs, 27 TREs, 3 TJMs — número, classe, órgão julgador, assuntos, data de ajuizamento. O DataJud não fornece ementa nem inteiro teor, e cada consulta leva ~30–50 s. Cada tribunal tem o botão "pesquisar no site oficial".
+- **Bloqueados para robôs:** STJ (pesquisa de jurisprudência), TJSC, TSE, LexML, TJSP (captcha) — não são contornados; use o link para o site oficial.
+- Campos que a fonte não fornece ficam nulos. Cada resultado traz fonte e data da verificação.
+- **IA (opcional):** defina `ANTHROPIC_API_KEY` no ambiente deste PC e reinicie o servidor. A IA só recebe as decisões que você marcar ("usar na IA"), deve citar processos e não inventar precedentes. A chave fica só no servidor.
+- Só funciona com o servidor local ligado (no GitHub Pages/celular fora do PC não há pesquisa ao vivo).
+
+## Leis e súmulas
+- 79 leis completas (`tools/lote_leis.py` importa um lote do Planalto; o atualizador diário as renova).
+- Súmulas: STF (782 de 799) e STJ (649, do PDF oficial `SumulasSTJ.pdf`; súmulas posteriores a esse PDF não estão incluídas — `python tools/importar_sumulas_stj.py`).

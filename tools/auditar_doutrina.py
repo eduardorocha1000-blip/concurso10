@@ -27,6 +27,18 @@ for f in arqs:
             cur = {"arquivo": os.path.basename(f), "pag_ini": i + 1, "paginas": 0, "texto": ""}; segs.append(cur)
         cur["paginas"] += 1; cur["texto"] += "\n" + t
 
+HEAD = re.compile(r"(?m)^(FASC[ÍI]CULO\s+\d+)\s*[—–-]\s*(\S[^\n]*)$")
+def dividir(seg):
+    """Blocos grandes que reúnem vários fascículos (cabeçalho 'FASCÍCULO N — TÍTULO' em maiúsculas) são divididos."""
+    ms = [m for m in HEAD.finditer(seg["texto"]) if m.group(2).strip().isupper() or m.group(2).strip()[:12].isupper()]
+    if seg["paginas"] < 15 or len(ms) < 2 and not (ms and ms[0].start() > 200): return [seg]
+    cortes = [m.start() for m in ms]; partes = []
+    if cortes[0] > 1500: partes.append(dict(seg, texto=seg["texto"][:cortes[0]], paginas=0, rotulo="abertura"))
+    total = len(seg["texto"])
+    for a, b in zip(cortes, cortes[1:] + [total]):
+        partes.append(dict(seg, texto=seg["texto"][a:b], paginas=0))
+    for q in partes: q["paginas"] = max(1, round(seg["paginas"] * len(q["texto"]) / total)); q["disc_pai"] = disciplina(seg["texto"])
+    return partes
 def titulo(t):
     t = norm(t[:1200])
     m = re.search(r"(?i)(?:VOLUME\s+[IVX\d]+\s*[—–-]?\s*[^F]{0,40})?FASC[ÍI]CULOS?\s+(\d+(?:\s+A\s+\d+)?)\s*(?:\|\s*\d+)?\s*[—–-]*\s*(.{0,170}?)(?:\s(?:Material|Prepara|N[íi]vel|Edi[çc]|Data|Introdu|Como utilizar|Posicionamento|Ideia central|Recorte|Orienta|Atualiza|Organiza|Preparação)\b|$)", t)
@@ -40,8 +52,9 @@ def disciplina(t):
     d = min(achados)[1]
     return {"PROCESSO CIVIL": "DIREITO PROCESSUAL CIVIL", "PROCESSUAL CIVIL": "DIREITO PROCESSUAL CIVIL", "PROCESSO PENAL": "DIREITO PROCESSUAL PENAL", "PROCESSUAL PENAL": "DIREITO PROCESSUAL PENAL"}.get(d, d)
 
+segs = [q for s0 in segs for q in dividir(s0)]
 for s in segs:
-    s["titulo"] = titulo(s["texto"]); s["disciplina"] = disciplina(s["texto"]); s["chars"] = len(s["texto"])
+    s["titulo"] = titulo(s["texto"]); s["disciplina"] = s.get("disc_pai") or disciplina(s["texto"]); s["chars"] = len(s["texto"])
     corpo = re.sub(r"(?im)^.*(?:P[áa]gina \d+|Fasc[íi]culo \d+\s*\|).*$", "", s["texto"])
     w = re.findall(r"\w+", corpo.lower())
     s["tf"] = Counter(x for x in w if len(x) > 3 and x not in STOP)

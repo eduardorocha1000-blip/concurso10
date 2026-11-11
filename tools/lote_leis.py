@@ -1,0 +1,49 @@
+#!/usr/bin/env python3
+"""Importa um lote de leis do Planalto (usa importar_lei.py). Uso: python tools/lote_leis.py"""
+import subprocess, sys, os
+P = "https://www.planalto.gov.br/ccivil_03/"
+L = [
+("l8112","Regime Jurídico dos Servidores Federais (Lei 8.112/1990)","Direito Administrativo","leis/l8112cons.htm"),
+("l9784","Processo Administrativo Federal (Lei 9.784/1999)","Direito Administrativo","leis/l9784.htm"),
+("l12846","Lei Anticorrupção (Lei 12.846/2013)","Direito Administrativo","_ato2011-2014/2013/lei/l12846.htm"),
+("l13303","Lei das Estatais (Lei 13.303/2016)","Direito Administrativo","_ato2015-2018/2016/lei/l13303.htm"),
+("l11107","Consórcios Públicos (Lei 11.107/2005)","Direito Administrativo","_ato2004-2006/2005/lei/l11107.htm"),
+("l11079","Parcerias Público-Privadas (Lei 11.079/2004)","Direito Administrativo","_ato2004-2006/2004/lei/l11079.htm"),
+("l8987","Concessões e Permissões (Lei 8.987/1995)","Direito Administrativo","leis/l8987cons.htm"),
+("del3365","Desapropriação (DL 3.365/1941)","Direito Administrativo","decreto-lei/del3365.htm"),
+("l4717","Ação Popular (Lei 4.717/1965)","Direito Processual Civil","leis/l4717.htm"),
+("l10257","Estatuto da Cidade (Lei 10.257/2001)","Direito Urbanístico","leis/leis_2001/l10257.htm"),
+("l6766","Parcelamento do Solo (Lei 6.766/1979)","Direito Urbanístico","leis/l6766.htm"),
+("l13465","REURB (Lei 13.465/2017)","Direito Urbanístico","_ato2015-2018/2017/lei/l13465.htm"),
+("lc64","Inelegibilidades (LC 64/1990)","Direito Eleitoral","leis/lcp/lcp64.htm"),
+("l9096","Lei dos Partidos Políticos (Lei 9.096/1995)","Direito Eleitoral","leis/l9096.htm"),
+("l6404","Lei das S.A. (Lei 6.404/1976)","Direito Empresarial","leis/l6404consol.htm"),
+("lc123","Estatuto da ME e EPP (LC 123/2006)","Direito Empresarial","leis/lcp/lcp123.htm"),
+("l9279","Propriedade Industrial (Lei 9.279/1996)","Direito Empresarial","leis/l9279.htm"),
+("l12529","Defesa da Concorrência (Lei 12.529/2011)","Direito Empresarial","_ato2011-2014/2011/lei/l12529.htm"),
+("l5478","Lei de Alimentos (Lei 5.478/1968)","Direito de Família","leis/l5478.htm"),
+("l12318","Alienação Parental (Lei 12.318/2010)","Direito de Família","_ato2007-2010/2010/lei/l12318.htm"),
+("l13709","LGPD (Lei 13.709/2018)","Direito Digital","_ato2015-2018/2018/lei/l13709.htm"),
+("l12965","Marco Civil da Internet (Lei 12.965/2014)","Direito Digital","_ato2011-2014/2014/lei/l12965.htm"),
+("lc75","Lei Orgânica do MPU (LC 75/1993)","Lei Orgânica do MP","leis/lcp/lcp75.htm"),
+("l4320","Normas de Direito Financeiro (Lei 4.320/1964)","Direito Financeiro","leis/l4320.htm"),
+("l15040","Marco Legal dos Seguros (Lei 15.040/2024)","Direito Civil","_ato2023-2026/2024/lei/L15040.htm"),
+("l12153","Juizados da Fazenda Pública (Lei 12.153/2009)","Processo Civil","_ato2007-2010/2009/lei/l12153.htm"),
+("l10259","Juizados Federais (Lei 10.259/2001)","Processo Civil","leis/leis_2001/l10259.htm"),
+("l13140","Mediação (Lei 13.140/2015)","Processo Civil","_ato2015-2018/2015/lei/l13140.htm"),
+("l8137","Crimes contra a Ordem Tributária (Lei 8.137/1990)","Direito Penal","leis/l8137.htm"),
+("l9613","Lavagem de Dinheiro (Lei 9.613/1998)","Direito Penal","leis/l9613.htm"),
+("l10826","Estatuto do Desarmamento (Lei 10.826/2003)","Direito Penal","leis/2003/l10.826.htm"),
+("l9455","Crimes de Tortura (Lei 9.455/1997)","Direito Penal","leis/l9455.htm"),
+("l13146","Estatuto da Pessoa com Deficiência (Lei 13.146/2015)","Direitos Humanos","_ato2015-2018/2015/lei/l13146.htm"),
+("l6015","Registros Públicos (Lei 6.015/1973)","Direito Notarial e Registral","leis/l6015compilada.htm"),
+("l8935","Notários e Registradores (Lei 8.935/1994)","Direito Notarial e Registral","leis/l8935.htm"),
+("l9514","Alienação Fiduciária de Imóveis (Lei 9.514/1997)","Direito Civil","leis/l9514.htm"),
+("del911","Alienação Fiduciária de Móveis (DL 911/1969)","Direito Civil","decreto-lei/Del0911.htm"),
+("l9656","Planos de Saúde (Lei 9.656/1998)","Direito do Consumidor","leis/l9656.htm"),
+]
+for i, n, m, u in L:
+    f = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "leis", i + ".js")
+    if os.path.exists(f) and "--refazer" not in sys.argv: print(i, "já existe"); continue
+    r = subprocess.run([sys.executable, "-I", os.path.join(os.path.dirname(os.path.abspath(__file__)), "importar_lei.py"), i, n, m, "oab,magsc,mpsc,magfed", P + u], capture_output=True, text=True, timeout=300)
+    print((r.stdout.strip() or r.stderr.strip()[-200:]))
