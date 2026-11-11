@@ -188,7 +188,7 @@ const VIEWS = {
       ${l.artigos.map(a => { const s = score(a, l.id, mod.id); return `<div class="art h${s}" data-item data-score="${s}"><b class="n">Art. ${esc(a.n)}</b>${/^\s*\((Revogad|Vetad)/i.test(a.t) ? '<span class="tag" style="background:#c0392b;color:#fff">não vigente</span>' : ''}${(_alt[l.id] || {})[a.n] ? `<span class="tag">alterado em ${_alt[l.id][a.n]}</span>` : ''}${stars(s)} ${s ? heatBadge(s) : ''}<div>${esc(a.t)}</div></div>`; }).join('')}</details>`).join('') || '<p>Sem leis para este módulo.</p>'}`;
   },
 
-  sumulas(mod) { return listaJuris(mod, 'sumulas', x => `<b>${esc(x.tribunal === 'STF-SV' ? 'Súmula Vinculante' : 'Súmula ' + x.tribunal)} ${esc(x.n)}</b> ${x.vinculante ? '<span class="tag">vinculante</span>' : ''}${x.materia && x.materia !== 'Geral' && _sa(x.materia) !== _sa(ramoDe(x)) ? `<span class="tag">${esc(x.materia)}</span>` : ''}${x.orgao ? `<span class="tag">${esc(x.orgao)}${x.data ? ' · ' + esc(x.data) : ''}</span>` : ''}`, x => x.texto); },
+  sumulas(mod) { return listaJuris(mod, 'sumulas', x => `<b>${esc(x.tribunal === 'STF-SV' ? 'Súmula Vinculante' : x.tribunal === 'TST-OJ' ? 'OJ do TST' : 'Súmula ' + x.tribunal)} ${esc(x.n)}</b> ${x.vinculante ? '<span class="tag">vinculante</span>' : ''}${x.materia && x.materia !== 'Geral' && _sa(x.materia) !== _sa(ramoDe(x)) ? `<span class="tag">${esc(x.materia)}</span>` : ''}${x.orgao ? `<span class="tag">${esc(x.orgao)}${x.data ? ' · ' + esc(x.data) : ''}</span>` : ''}`, x => x.texto); },
   enunciados(mod) { return listaJuris(mod, 'enunciados', x => `<b>${esc(x.fonte)} · Enunc. ${esc(x.n)}</b>${x.materia ? `<span class="tag">${esc(x.materia)}</span>` : ''}`, x => x.texto); },
   juris(mod) { return '<div class="card"><a class="btn" href="#/jurisprudencia">⚖️ Pesquisar jurisprudência ao vivo nos tribunais</a></div>' + listaJuris(mod, 'juris', x => `<b>${esc(x.tribunal)}</b> — ${esc(x.ref)}<span class="tag">${esc(x.materia)}</span>`, x => x.tese); },
 
@@ -322,7 +322,7 @@ function ramoDe(x) {
   if (!r) { const t = _sa(x.texto); const reg = RAMO_REGRAS.find(([, rx]) => rx.test(t)); r = reg ? reg[0] : 'Sem classificação'; auto = true; }
   x._ramo = r; x._auto = auto; return r;
 }
-const SGRUPOS = [['STF-SV', 'Súmulas Vinculantes (STF)'], ['STF', 'Súmulas do STF'], ['STJ', 'Súmulas do STJ'], ['TST', 'Súmulas do TST'], ['TSE', 'Súmulas do TSE'], ['STM', 'Súmulas do STM'], ['TJSC', 'Súmulas do TJSC']];
+const SGRUPOS = [['STF-SV', 'Súmulas Vinculantes (STF)'], ['STF', 'Súmulas do STF'], ['STJ', 'Súmulas do STJ'], ['TST', 'Súmulas do TST'], ['TSE', 'Súmulas do TSE'], ['STM', 'Súmulas do STM'], ['TJSC', 'Súmulas do TJSC'], ['TST-OJ', 'Orientações Jurisprudenciais do TST']];
 function listaJuris(mod, key, head, body) {
   let it = DATA[key].filter(x => inMod(x, mod.id)).map(x => ({ x, s: score(Object.assign(x, { _k: chaveHeat(key, x) }), null, mod.id) }));
   let chips = '', ordem = 'num';
@@ -358,7 +358,7 @@ function listaJuris(mod, key, head, body) {
     it = noGrupo.filter(({ x }) => (!selR || selR.has(ramoDe(x))) && (sit === 'todas' || (sit === 'vigentes' ? vigente(x) : !vigente(x))));
     it.sort((a, b) => ordem === 'heat' ? b.s - a.s : ordem === 'ramo' ? ramoDe(a.x).localeCompare(ramoDe(b.x)) || a.x.fonte.localeCompare(b.x.fonte) || (a.x.ord || 0) - (b.x.ord || 0) : a.x.fonte.localeCompare(b.x.fonte) || (a.x.ord || parseInt(a.x.n) || 0) - (b.x.ord || parseInt(b.x.n) || 0));
   }
-  const num = x => parseInt(x.n) || 0, trib = (a, b) => (a.x.tribunal > b.x.tribunal ? 1 : a.x.tribunal < b.x.tribunal ? -1 : 0);
+  const num = x => x.ord ?? (parseInt(x.n) || 0), trib = (a, b) => (a.x.tribunal > b.x.tribunal ? 1 : a.x.tribunal < b.x.tribunal ? -1 : 0);
   const cmp = { numd: (a, b) => trib(a, b) || num(b.x) - num(a.x), ramo: (a, b) => ramoDe(a.x).localeCompare(ramoDe(b.x)) || trib(a, b) || num(a.x) - num(b.x), heat: (a, b) => b.s - a.s };
   if (key === 'sumulas') { if (cmp[ordem]) it.sort(cmp[ordem]); } else if (key !== 'enunciados') it.sort((a, b) => b.s - a.s);
   const extra = x => (key === 'sumulas' || key === 'enunciados') ? `${x.situacao && x.situacao !== 'Vigente' ? `<span class="tag" style="background:#c0392b;color:#fff">${esc(x.situacao)}</span>` : ''}<span class="tag">${esc(ramoDe(x))}${x._auto ? ' (auto)' : ''}</span>` : '';
@@ -438,11 +438,11 @@ function loadScript(src) { return new Promise(r => { const s = document.createEl
   const ALLM = DATA.modulos.map(m => m.id), idx = new Map(DATA.sumulas.map(x => [x.tribunal + '|' + x.n, x]));
   (window.JUR_IMPORT || []).flat().forEach(x => {
     const k = x.tribunal + '|' + x.n, ex = idx.get(k);
-    const EXTRA = ['ramo', 'orgao', 'data', 'situacao', 'pub', 'obs', 'url', 'texto_anterior'];
+    const EXTRA = ['ord', 'so_titulo', 'ramo', 'ramo_auto', 'orgao', 'data', 'situacao', 'pub', 'obs', 'url', 'texto_anterior'];
     if (ex) { Object.assign(ex, { texto: x.texto, vinculante: x.vinculante || ex.vinculante }); EXTRA.forEach(c => { if (x[c] != null && x[c] !== '') ex[c] = x[c]; }); if (x.materia && (!ex.materia || ex.materia === 'Geral')) ex.materia = x.materia; }
     else { const o = { tribunal: x.tribunal, n: x.n, materia: x.materia || 'Geral', texto: x.texto, vinculante: x.vinculante, mods: ALLM, f: {} }; EXTRA.forEach(c => { if (x[c] != null && x[c] !== '') o[c] = x[c]; }); DATA.sumulas.push(o); idx.set(k, o); }
   });
-  DATA.sumulas.sort((a, b) => (a.tribunal > b.tribunal ? 1 : a.tribunal < b.tribunal ? -1 : (parseInt(a.n) || 0) - (parseInt(b.n) || 0)));
+  DATA.sumulas.sort((a, b) => (a.tribunal > b.tribunal ? 1 : a.tribunal < b.tribunal ? -1 : (a.ord ?? (parseInt(a.n) || 0)) - (b.ord ?? (parseInt(b.n) || 0))));
   herdaEnam();
   route();
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});

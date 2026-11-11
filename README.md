@@ -85,3 +85,6 @@ Tela `#/editais` (e o botão em "Visão geral" de cada módulo): conteúdo progr
 - Aba **Súmulas**: grupos STF-SV, STF, STJ, TST, TSE, STM e TJSC; ramo do direito; situação; ordem. Aba **Enunciados**: origem (órgão do TJSC, CJF), ramo, situação e ordem.
 - Ramo: TST/TSE/STM têm ramo definido na importação (TST: Trabalhista ou Processual do Trabalho por palavra-chave do tema — marcado "auto"); TJSC e enunciados usam classificação automática por palavras-chave ("auto").
 - O texto vem de PDFs de páginas web: pode haver quebras ou palavras coladas. Confira no site oficial.
+
+## Orientações Jurisprudenciais do TST
+`python tools/importar_ojs_tst.py <PDF da compilação do TRT-3> [pág_ini pág_fim]` gera `data/jur_tst_oj.js`: **700 OJs** (Tribunal Pleno/Órgão Especial 11, SBDI-1 418, SBDI-1 Transitória 79, SBDI-2 154, SDC 38; 308 canceladas), com assunto, enunciado, situação e histórico. Fonte: "Jurisprudência consolidada — TRT3 e TST" (TRT da 3ª Região, atualizada em 28/06/2024; páginas 154 a 256). Aparece na aba Súmulas como grupo "Orientações Jurisprudenciais do TST". Atenção: a compilação tem data (jun/2024); OJs posteriores não estão incluídas, e o texto vem de PDF (pode haver quebras). O site do TST bloqueia leitura automática: se você salvar as OJs em PDF do próprio TST, dá para ajustar o importador.
