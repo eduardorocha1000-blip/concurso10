@@ -46,3 +46,4 @@ Todos os textos de amostra devem ser **conferidos** com a fonte oficial antes de
 - Leis de SC (ALESC) vêm de arquivo local e não se atualizam sozinhas.
 - Teses do STJ: `python tools/importar_stj.py [meses]` lê os Dados Abertos do STJ (espelhos de acórdãos) e importa os acórdãos que têm tese jurídica ou tema (379 em 12 meses, matéria agrupada por seção/turma). Entra no atualizador diário. Não são todos os acórdãos nem súmulas do STJ.
 - Ainda NÃO implementado: súmulas do STJ, LexML, DataJud/TJSC, legislação estadual/municipal em massa, jurisprudência por dispositivo, IA com fontes.
+- TJSC / TRF4: o portal do TJSC classifica acesso automatizado como bot e bloqueia ("Bloqueio temporário"); não contornei. Copie as ementas/teses que quiser estudar para `dados/juris_tjsc.csv` (modelo em `dados/juris_modelo.csv`) e rode `python tools/importar_juris_csv.py dados/juris_tjsc.csv tjsc` (para o TRF4 use o nome `trf4`).
