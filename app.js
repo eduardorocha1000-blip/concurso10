@@ -8,9 +8,10 @@ const store = {
 };
 const TABS = [
   ['visao','Visão geral'],['leis','Leis'],['sumulas','Súmulas'],['principios','Princípios'],['enunciados','Enunciados'],
-  ['juris','Jurisprudência'],['doutrina','Doutrina'],['mapas','Mapas mentais'],['fluxos','Fluxogramas'],['exemplos','Exemplos'],
-  ['questoes','Questões'],['cards','Flashcards'],['discursivas','Discursivas'],['orais','Prova oral']
+  ['juris','Jurisprudência'],['doutrina','Doutrina e prática']
 ];
+const TAB_ENAM = ['enam', 'Guia ENAM'];   // só no módulo ENAM
+const tabsDe = mod => mod.id === 'enam' ? [TABS[0], TAB_ENAM, ...TABS.slice(1)] : TABS;
 const inMod = (x, m) => !x.mods || x.mods.includes(m);
 const norm = n => String(n).replace(/[.º°ºo\s]/g, '').toLowerCase();
 
@@ -45,10 +46,10 @@ function route() {
   $('#crumb').textContent = '';
   if (p1 === 'm' && DATA.modulos.find(x => x.id === p2)) {
     const mod = DATA.modulos.find(x => x.id === p2);
-    const tab = TABS.find(t => t[0] === p3) ? p3 : 'visao';
+    const tab = VIEWS[p3] ? p3 : 'visao';
     $('#crumb').textContent = '› ' + mod.nome;
     app.innerHTML = `<h1>${mod.icone} ${esc(mod.nome)}</h1>
-      <nav class="tabs">${TABS.map(([k, n]) => `<a href="#/m/${mod.id}/${k}" class="${k === tab ? 'on' : ''}">${n}</a>`).join('')}</nav>
+      <nav class="tabs">${tabsDe(mod).map(([k, n]) => `<a href="#/m/${mod.id}/${k}" class="${k === tab || (k === 'doutrina' && ['mapas','fluxos','exemplos','questoes','cards','discursivas','orais'].includes(tab)) ? 'on' : ''}">${n}</a>`).join('')}</nav>
       <div id="tab">${VIEWS[tab](mod)}</div>`;
     const on = app.querySelector('.tabs a.on'); on && on.scrollIntoView({ inline: 'center', block: 'nearest' });
   } else if (p1 === 'jurisprudencia') {
@@ -116,7 +117,15 @@ function exportar(id, fmt) {
   const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = id + '.' + (fmt === 'doc' ? 'doc' : 'txt'); a.click();
 }
 
-function biblioteca() {
+const PRAT = { 'DIREITO CIVIL': ['Civil'], 'DIREITO PROCESSUAL CIVIL': ['Processo Civil'], 'DIREITO PENAL': ['Penal'], 'DIREITO PROCESSUAL PENAL': ['Processo Penal'], 'CONSTITUCIONAL': ['Constitucional'], 'DIREITO ADMINISTRATIVO': ['Administrativo'], 'DIREITO DO CONSUMIDOR': ['Consumidor'], 'DIREITO EMPRESARIAL': [] };
+const PRAT_MAT = { 'Sucessões': ['Civil (Sucessões)'], 'Família': ['Civil (Família)'] };   // refinamentos dentro de Direito Civil
+function pratica(mod, keys, titulo) {
+  if (!keys || !keys.length) return '';
+  const cat = [['mapas', '🧠 Mapas mentais', 'mapas'], ['fluxos', '🔀 Fluxogramas', 'fluxos'], ['exemplos', '💡 Exemplos', 'exemplos'], ['questoes', '✅ Questões comentadas', 'questoes'], ['cards', '🃏 Flashcards', 'cards'], ['discursivas', '✍️ Discursivas', 'discursivas'], ['orais', '🎤 Prova oral', 'orais']];
+  const blocos = cat.map(([k, nome]) => { const n = DATA[k].filter(x => inMod(x, mod.id) && keys.includes(x.materia)).length; return n ? `<details class="card"><summary>${nome} <span class="tag">${n}</span></summary>${VIEWS[k](mod, keys)}</details>` : ''; }).join('');
+  return blocos ? `<details class="card" style="border-left:4px solid var(--c,#1e6fb8)"><summary><b>📝 ${esc(titulo)}</b></summary>${blocos}</details>` : '';
+}
+function biblioteca(mod) {
   const idx = window.DOUTRINA_IDX; if (!idx || !idx.length) return '';
   const lido = store.get('dread', {}), mostrar = state.dup, byId = Object.fromEntries(idx.map(x => [x.id, x]));
   const vis = idx.filter(x => mostrar || x.status !== 'dup'), nLido = idx.filter(x => lido[x.id]).length, nDup = idx.filter(x => x.status === 'dup').length;
@@ -131,11 +140,13 @@ function biblioteca() {
   return `<div class="card"><h3>📖 Doutrina própria (${vis.length} títulos)</h3><p class="mut">Lidos: <b>${nLido}</b>. ${nDup} títulos repetem o assunto de outro e ficam ocultos${mostrar ? ' (agora visíveis)' : ''}. Nada foi apagado.</p>
     <button class="sec" data-act="dup">${mostrar ? 'Ocultar' : 'Mostrar'} repetidos</button></div>`
     + Object.entries(porDisc).map(([d, ms]) => `<details class="card"><summary><b>${esc(nome(d))}</b> <span class="tag">${Object.values(ms).flat().length}</span></summary>
-      ${Object.entries(ms).map(([m, xs]) => `<details class="card"><summary>${esc(m)} <span class="tag">${xs.length}</span></summary>${xs.sort((a, b) => a.ordem - b.ordem || a.titulo.localeCompare(b.titulo)).map(item).join('')}</details>`).join('')}</details>`).join('');
+      ${pratica(mod, PRAT[d], 'Prática de ' + nome(d))}${Object.entries(ms).map(([m, xs]) => `<details class="card"><summary>${esc(m)} <span class="tag">${xs.length}</span></summary>${pratica(mod, d === 'DIREITO CIVIL' ? PRAT_MAT[m] : null, 'Prática: ' + m)}${xs.sort((a, b) => a.ordem - b.ordem || a.titulo.localeCompare(b.titulo)).map(item).join('')}</details>`).join('')}</details>`).join('')
+    + pratica(mod, ['ECA', 'Ética (OAB)'], 'Prática de outras matérias (ECA e Ética)');
 }
 function carregarDoutrina(id) {
   const box = document.getElementById('d-' + id); if (!box) return;
-  const pintar = () => { const b = (window.DOUT || {})[id]; box.innerHTML = b ? b.map(([t, x]) => t === 'h' ? `<h4>${esc(x)}</h4>` : `<p>${esc(x)}</p>`).join('') : '<p class="mut">Texto indisponível (arquivo não encontrado).</p>'; };
+  const ix = (window.DOUTRINA_IDX || []).find(x => x.id === id), mapaImg = ix && ix.mapa ? `<details class="card" open><summary>🧠 Mapa mental deste capítulo</summary><a href="data/doutrina/mapas/${id}.svg" target="_blank" rel="noopener"><img loading="lazy" src="data/doutrina/mapas/${id}.svg" alt="Mapa mental" style="max-width:100%;height:auto;background:#fff;border-radius:8px"></a><p class="mut">Toque para abrir em tamanho grande. Gerado a partir dos títulos do capítulo.</p></details>` : '';
+  const pintar = () => { const b = (window.DOUT || {})[id]; box.innerHTML = b ? mapaImg + b.map(([t, x]) => t === 'h' ? `<h4>${esc(x)}</h4>` : `<p>${esc(x)}</p>`).join('') : '<p class="mut">Texto indisponível (arquivo não encontrado).</p>'; };
   if ((window.DOUT || {})[id]) return pintar();
   box.textContent = 'Carregando…';
   const sc = document.createElement('script'); sc.src = 'data/doutrina/' + id + '.js'; sc.onload = pintar; sc.onerror = pintar; document.head.appendChild(sc);
@@ -161,7 +172,7 @@ const VIEWS = {
       ${top.slice(0, 12).map(({ s, l, a }) => `<div class="art h${s}"><b>${esc(l.nome.split('(')[0])} · art. ${esc(a.n)}</b> ${stars(s)} ${heatBadge(s)}</div>`).join('') || '<p class="mut">Sem dados de frequência.</p>'}</div>
     <div class="card"><h3>📚 Conteúdo disponível</h3><div class="grid">
       ${[['leis','Leis'],['sumulas','Súmulas'],['principios','Princípios'],['enunciados','Enunciados'],['juris','Jurisprudência'],['doutrina','Textos de doutrina'],['mapas','Mapas mentais'],['fluxos','Fluxogramas'],['exemplos','Exemplos'],['questoes','Questões'],['cards','Flashcards'],['discursivas','Discursivas'],['orais','Perguntas orais']]
-        .map(([k, n]) => `<a class="card" href="#/m/${mod.id}/${k === 'cards' ? 'cards' : k}"><b>${cnt(k)}</b> ${n}</a>`).join('')}</div></div>`;
+        .map(([k, n]) => `<a class="card" href="#/m/${mod.id}/${['mapas','fluxos','exemplos','questoes','cards','discursivas','orais'].includes(k) ? 'doutrina' : k}"><b>${cnt(k)}</b> ${n}</a>`).join('')}</div></div>`;
   },
 
   leis(mod) {
@@ -185,17 +196,18 @@ const VIEWS = {
 
   doutrina(mod) {
     const it = DATA.doutrina.filter(x => inMod(x, mod.id));
-    return biblioteca() + filterBox('Filtrar doutrina…') + it.map(d => `<details class="card" data-item open><summary>${esc(d.titulo)} <span class="tag">${esc(d.materia)}</span></summary>${d.corpo}</details>`).join('');
+    return biblioteca(mod) + filterBox('Filtrar doutrina…') + it.map(d => `<details class="card" data-item open><summary>${esc(d.titulo)} <span class="tag">${esc(d.materia)}</span></summary>${d.corpo}</details>`).join('');
   },
 
-  mapas(mod) {
+  mapas(mod, keys) {
     const tree = n => `<li><span class="nd">${esc(n.t)}</span>${n.c ? '<ul>' + n.c.map(tree).join('') + '</ul>' : ''}</li>`;
-    return DATA.mapas.filter(x => inMod(x, mod.id)).map(m => `<div class="card"><h3>🧠 ${esc(m.titulo)} <span class="tag">${esc(m.materia)}</span></h3><ul class="tree">${tree(m.arvore)}</ul></div>`).join('');
+    return DATA.mapas.filter(x => inMod(x, mod.id) && (!keys || keys.includes(x.materia))).map(m => { const img = (window.MAPAS_IMG || {})[m.titulo]; return `<div class="card"><h3>🧠 ${esc(m.titulo)} <span class="tag">${esc(m.materia)}</span></h3>${img ? `<a href="${img}" target="_blank" rel="noopener"><img src="${img}" alt="Mapa mental: ${esc(m.titulo)}" loading="lazy" style="max-width:100%;height:auto;background:#fff;border-radius:8px"></a><p class="mut">Toque na imagem para abrir em tamanho grande.</p>` : `<ul class="tree">${tree(m.arvore)}</ul>`}</div>`; }).join('');
   },
 
-  fluxos(mod) {
-    const fl = DATA.fluxos.filter(x => inMod(x, mod.id));
-    return fl.map((f, i) => {
+  fluxos(mod, keys) {
+    const fl = DATA.fluxos.filter(x => inMod(x, mod.id) && (!keys || keys.includes(x.materia)));
+    return fl.map(f => {
+      const i = DATA.fluxos.indexOf(f);
       const st = state.flow && state.flow.i === i ? state.flow : null;
       let body;
       if (!st) body = `<button data-act="flow" data-i="${i}">▶ Iniciar fluxograma</button> <details><summary>Ver todas as etapas</summary>${Object.entries(f.nos).map(([k, n]) => `<div class="node ${n.tipo}">${esc(n.t)}${(n.op || []).map(o => `<div class="mut">↳ ${esc(o[0])}</div>`).join('')}</div>`).join('')}</details>`;
@@ -210,31 +222,31 @@ const VIEWS = {
     }).join('');
   },
 
-  exemplos(mod) {
-    const it = DATA.exemplos.filter(x => inMod(x, mod.id));
-    return filterBox('Filtrar exemplos…') + it.map(x => `<details class="card" data-item><summary>${esc(x.titulo)} <span class="tag">${esc(x.materia)}</span></summary><p><b>Caso:</b> ${esc(x.caso)}</p><p><b>Resolução:</b> ${x.solucao}</p></details>`).join('');
+  exemplos(mod, keys) {
+    const it = DATA.exemplos.filter(x => inMod(x, mod.id) && (!keys || keys.includes(x.materia)));
+    return (keys ? '' : filterBox('Filtrar exemplos…')) + it.map(x => `<details class="card" data-item><summary>${esc(x.titulo)} <span class="tag">${esc(x.materia)}</span></summary><p><b>Caso:</b> ${esc(x.caso)}</p><p><b>Resolução:</b> ${x.solucao}</p></details>`).join('');
   },
 
-  questoes(mod) {
-    const all = DATA.questoes.filter(x => inMod(x, mod.id)), st = store.get('q', {});
+  questoes(mod, keys) {
+    const all = DATA.questoes.filter(x => inMod(x, mod.id) && (!keys || keys.includes(x.materia))), st = store.get('q', {});
     const nOk = all.filter(q => st[q.id]?.ok).length, nErr = all.filter(q => st[q.id] && !st[q.id].ok).length, nNew = all.length - nOk - nErr;
-    const f = state.qf || 'todas';
+    const f = keys ? 'todas' : (state.qf || 'todas');
+    const qcard = q => { const a = st[q.id]; return `<div class="card" data-item><div class="mut">${esc(q.materia)} · ${esc(q.banca)} ${esc(q.ano)}</div><p>${esc(q.enun)}</p>
+      ${q.alts.map((t, i) => `<button class="alt ${a ? (i === q.gab ? 'right' : i === a.pick ? 'wrong' : '') : ''}" data-act="ans" data-q="${q.id}" data-i="${i}" ${a ? 'disabled' : ''}>${'ABCDE'[i]}) ${esc(t)}</button>`).join('')}
+      ${a ? `<div class="banner">${a.ok ? '✅ Correto.' : '❌ Errou.'} <b>Gabarito: ${'ABCDE'[q.gab]}</b><br>${esc(q.coment)}<br><button class="sec" data-act="redo" data-q="${q.id}">Refazer</button></div>` : ''}</div>`; };
     const qs = all.filter(q => f === 'erradas' ? st[q.id] && !st[q.id].ok : f === 'novas' ? !st[q.id] : true);
     const ms = {}; all.forEach(q => { const s = (ms[q.materia] = ms[q.materia] || { t: 0, ok: 0 }); if (st[q.id]) { s.t++; if (st[q.id].ok) s.ok++; } });
     const desemp = Object.entries(ms).filter(([, s]) => s.t).sort((a, b) => a[1].ok / a[1].t - b[1].ok / b[1].t)
       .map(([m, s]) => `<span class="tag">${esc(m)}: ${Math.round(100 * s.ok / s.t)}% (${s.ok}/${s.t})</span>`).join(' ');
     const btn = (v, n, c) => `<button class="${f === v ? '' : 'sec'}" data-act="qf" data-v="${v}">${n} (${c})</button>`;
+    if (keys) return qs.map(qcard).join('') ;
     return `<div class="card"><div class="row">${btn('todas', 'Todas', all.length)}${btn('novas', 'Novas', nNew)}${btn('erradas', '📕 Caderno de erros', nErr)}</div>
       <p class="mut">Acertos: <b>${nOk}</b> · Erros: <b>${nErr}</b>. Cada erro vira um flashcard automático (aba Flashcards).</p>${desemp ? `<p class="mut">Desempenho por matéria (pior primeiro): ${desemp}</p>` : ''}</div>`
-      + filterBox('Filtrar questões…') + (qs.length ? '' : '<p class="mut">Nenhuma questão neste filtro.</p>') + qs.map(q => {
-      const a = st[q.id];
-      return `<div class="card" data-item><div class="mut">${esc(q.materia)} · ${esc(q.banca)} ${esc(q.ano)}</div><p>${esc(q.enun)}</p>
-      ${q.alts.map((t, i) => `<button class="alt ${a ? (i === q.gab ? 'right' : i === a.pick ? 'wrong' : '') : ''}" data-act="ans" data-q="${q.id}" data-i="${i}" ${a ? 'disabled' : ''}>${'ABCDE'[i]}) ${esc(t)}</button>`).join('')}
-      ${a ? `<div class="banner">${a.ok ? '✅ Correto.' : '❌ Errou.'} <b>Gabarito: ${'ABCDE'[q.gab]}</b><br>${esc(q.coment)}<br><button class="sec" data-act="redo" data-q="${q.id}">Refazer</button></div>` : ''}</div>`;
-    }).join('');
+      + filterBox('Filtrar questões…') + (qs.length ? '' : '<p class="mut">Nenhuma questão neste filtro.</p>') + qs.map(qcard).join('');
   },
 
-  cards(mod) {
+  cards(mod, keys) {
+    if (keys) { const l = DATA.cards.filter(x => inMod(x, mod.id) && (!keys || keys.includes(x.materia))); return `<p class="mut">Toque no cartão para ver a resposta. Para revisar com repetição espaçada: <a href="#/m/${mod.id}/cards">revisão do dia</a>.</p>` + l.map(c => `<details class="card"><summary>${esc(c.f)}</summary><p><b>${esc(c.v)}</b></p></details>`).join(''); }
     const all = DATA.cards.concat(store.get('errcards', [])).filter(x => inMod(x, mod.id)), st = store.get('cards', {}), now = Date.now();
     const due = all.filter(c => !st[c.id] || st[c.id].due <= now);
     if (!due.length) return `<div class="card"><h3>🎉 Nada para revisar agora</h3><p class="mut">${all.length} flashcards neste módulo. Volte mais tarde.</p></div>`;
@@ -244,23 +256,62 @@ const VIEWS = {
     ${state.show ? `<div class="row"><button class="bad" data-act="rate" data-id="${c.id}" data-q="0">Errei</button><button class="mid" data-act="rate" data-id="${c.id}" data-q="3">Difícil</button><button class="ok" data-act="rate" data-id="${c.id}" data-q="4">Bom</button><button class="sec" data-act="rate" data-id="${c.id}" data-q="5">Fácil</button></div>` : ''}`;
   },
 
-  discursivas(mod) {
-    const it = DATA.discursivas.filter(x => inMod(x, mod.id));
-    return it.map((d, i) => `<details class="card"><summary>${esc(d.tema)} <span class="tag">${esc(d.materia)}</span></summary>
+  discursivas(mod, keys) {
+    const it = DATA.discursivas.filter(x => inMod(x, mod.id) && (!keys || keys.includes(x.materia)));
+    return it.map(d => { const i = DATA.discursivas.indexOf(d); return `<details class="card"><summary>${esc(d.tema)} <span class="tag">${esc(d.materia)}</span></summary>
       <p>${esc(d.enun)}</p><textarea placeholder="Escreva sua resposta aqui (rascunho salvo automaticamente)" data-draft="d${i}">${esc(store.get('draft.d' + i, ''))}</textarea>
-      <h3>Espelho de correção (autoavaliação)</h3>${d.espelho.map((e, j) => `<label style="display:block"><input type="checkbox" data-chk="d${i}_${j}" ${store.get('chk.d' + i + '_' + j, false) ? 'checked' : ''}> ${esc(e)}</label>`).join('')}</details>`).join('');
+      <h3>Espelho de correção (autoavaliação)</h3>${d.espelho.map((e, j) => `<label style="display:block"><input type="checkbox" data-chk="d${i}_${j}" ${store.get('chk.d' + i + '_' + j, false) ? 'checked' : ''}> ${esc(e)}</label>`).join('')}</details>`; }).join('');
   },
 
-  orais(mod) {
-    const it = DATA.orais.filter(x => inMod(x, mod.id));
-    return `<p class="mut">Responda em voz alta (cronometre 2–3 min) e só então abra a resposta-modelo.</p>${it.map(o => `<details class="card"><summary>${esc(o.pergunta)} <span class="tag">${esc(o.materia)}</span></summary><p>${esc(o.resposta)}</p></details>`).join('')}`;
+  orais(mod, keys) {
+    const it = DATA.orais.filter(x => inMod(x, mod.id) && (!keys || keys.includes(x.materia)));
+    return `${keys ? '' : '<p class="mut">Responda em voz alta (cronometre 2–3 min) e só então abra a resposta-modelo.</p>'}${it.map(o => `<details class="card"><summary>${esc(o.pergunta)} <span class="tag">${esc(o.materia)}</span></summary><p>${esc(o.resposta)}</p></details>`).join('')}`;
   }
 };
 
+// ---- Guia do ENAM ----
+const ENAM_DIST = [['Direito Constitucional', 16, ['CONSTITUCIONAL']], ['Direito Civil', 12, ['DIREITO CIVIL']], ['Direito Processual Civil', 12, ['DIREITO PROCESSUAL CIVIL']], ['Direito Penal e Processual Penal', 12, ['DIREITO PENAL', 'DIREITO PROCESSUAL PENAL']],
+  ['Direito Administrativo', 10, ['DIREITO ADMINISTRATIVO']], ['Direitos Humanos', 6, []], ['Direito Empresarial', 6, ['DIREITO EMPRESARIAL']], ['Formação humanística e ética (Sociologia, Filosofia, Psicologia, Ética)', 6, []]];
+VIEWS.enam = function (mod) {
+  const idx = window.DOUTRINA_IDX || [], lido = store.get('dread', {}), chk = store.get('enamchk', {}), horas = +(store.get('enamh', 20));
+  const linhas = ENAM_DIST.map(([nome, q, discs], i) => {
+    const its = idx.filter(x => discs.includes(x.disc) && x.status !== 'dup'), n = its.length, l = its.filter(x => lido[x.id]).length;
+    const h = Math.round(horas * q / 80 * 10) / 10;
+    return `<tr><td>${esc(nome)}</td><td style="text-align:center"><b>${q}</b></td><td style="text-align:center">${Math.round(q / 0.8)}%</td><td style="text-align:center">${h} h</td>
+      <td>${n ? `<div class="bar"><i style="width:${Math.round(100 * l / n)}%"></i></div><span class="mut">${l}/${n} lidos</span>` : '<span class="mut">sem doutrina importada</span>'}</td><td style="text-align:center"><input type="checkbox" data-enamchk="${i}" ${chk[i] ? 'checked' : ''}></td></tr>`;
+  }).join('');
+  return `<div class="card"><h3>📝 ENAM — Exame Nacional da Magistratura</h3>
+    <p>Exame nacional organizado pela ENFAM (banca: FGV) que antecede os concursos de ingresso na magistratura. Prova objetiva única, de caráter <b>eliminatório</b> (não classificatório), com <b>80 questões</b> de múltipla escolha e 5 alternativas, sem nota negativa. Segundo as fontes consultadas, exige no mínimo <b>56 acertos</b> (40 para candidatos de vagas reservadas) e ocorre duas vezes por ano.</p>
+    <div class="banner">⚠ Estes números vêm de blogs de cursos preparatórios e de notícias, não do edital. <b>Confirme no edital e no cronograma oficiais</b> (FGV: conhecimento.fgv.br/concursos; ENFAM: enfam.jus.br). A distribuição por disciplina abaixo varia entre edições (conferir o Anexo I).</div></div>
+  <div class="card"><h3>Distribuição de questões e plano de estudo</h3>
+    <p class="row"><label>Horas de estudo por semana: <input type="number" min="1" max="80" value="${horas}" data-enamh style="width:70px"></label></p>
+    <div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%"><thead><tr><th style="text-align:left">Disciplina</th><th>Questões</th><th>Peso</th><th>Horas/sem.</th><th>Leitura da doutrina</th><th>Revisada</th></tr></thead><tbody>${linhas}</tbody></table></div>
+    <p class="mut">As horas semanais são proporcionais ao número de questões (80 no total). "Leitura da doutrina" conta os capítulos marcados como lidos em <a href="#/m/${mod.id}/doutrina">Doutrina e prática</a>, sem os repetidos.</p></div>
+  <div class="card"><h3>Como usar este módulo</h3><ul>
+    <li><b>Leis, súmulas, jurisprudência e doutrina</b> da magistratura estão neste módulo (os mesmos conteúdos de Magistratura Estadual SC e Federal).</li>
+    <li>Em <a href="#/m/${mod.id}/doutrina">Doutrina e prática</a>, cada matéria traz os mapas mentais, exemplos, questões, flashcards, discursivas e prova oral relacionados.</li>
+    <li>Pesquise decisões nos tribunais em <a href="#/jurisprudencia">⚖️ Pesquisa de jurisprudência</a>.</li>
+    <li>Formação humanística e Direitos Humanos <b>ainda não têm doutrina nem questões</b> no app: precisam ser importadas ou escritas.</li></ul></div>`;
+};
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.matches && t.matches('[data-enamchk]')) { const c = store.get('enamchk', {}); c[t.dataset.enamchk] = t.checked; store.set('enamchk', c); }
+  if (t.matches && t.matches('[data-enamh]')) { store.set('enamh', Math.max(1, +t.value || 20)); route(); }
+});
+
 const chaveHeat = (key, x) => key === 'sumulas' ? 's|' + x.tribunal + '|' + x.n : key === 'enunciados' ? 'e|' + x.fonte + '|' + x.n : 'j|' + x.ref;
+const SGRUPOS = [['STF-SV', 'Súmulas Vinculantes (STF)'], ['STF', 'Súmulas do STF'], ['STJ', 'Súmulas do STJ'], ['TST', 'Súmulas do TST'], ['TSE', 'Súmulas do TSE'], ['STM', 'Súmulas do STM']];
 function listaJuris(mod, key, head, body) {
-  const it = DATA[key].filter(x => inMod(x, mod.id)).map(x => ({ x, s: score(Object.assign(x, { _k: chaveHeat(key, x) }), null, mod.id) })).sort((a, b) => b.s - a.s);
-  return `${demoBanner()}${legend()}${filterBox('Filtrar…')}${it.map(({ x, s }) => `<div class="art h${s}" data-item data-score="${s}">${head(x)} ${stars(s)} ${s ? heatBadge(s) : ''}<div>${esc(body(x))}</div></div>`).join('') || '<p class="mut">Sem itens.</p>'}`;
+  let it = DATA[key].filter(x => inMod(x, mod.id)).map(x => ({ x, s: score(Object.assign(x, { _k: chaveHeat(key, x) }), null, mod.id) })).sort((a, b) => b.s - a.s);
+  let chips = '';
+  if (key === 'sumulas') {
+    const cont = {}; it.forEach(({ x }) => cont[x.tribunal] = (cont[x.tribunal] || 0) + 1);
+    const sel = new Set(store.get('sgrp', null) || SGRUPOS.map(g => g[0]));
+    chips = `<div class="card"><b>Grupos de súmulas</b> <span class="mut">(marque os que quer estudar)</span><div class="row">${SGRUPOS.map(([g, n]) => cont[g] ? `<button class="${sel.has(g) ? '' : 'sec'}" data-act="sg" data-g="${g}">${sel.has(g) ? '✓ ' : ''}${n} (${cont[g]})</button>` : `<button class="sec" disabled title="Sem itens: o site do tribunal bloqueia leitura automática. Importe com tools/importar_sumulas_csv.py">${n} (0)</button>`).join('')}</div>
+      <p class="row"><button class="sec" data-act="sgall" data-v="1">Todos</button><button class="sec" data-act="sgall" data-v="0">Nenhum</button></p></div>`;
+    it = it.filter(({ x }) => sel.has(x.tribunal));
+  }
+  return `${demoBanner()}${legend()}${filterBox('Filtrar…')}${chips}${it.map(({ x, s }) => `<div class="art h${s}" data-item data-score="${s}">${head(x)} ${stars(s)} ${s ? heatBadge(s) : ''}<div>${esc(body(x))}</div></div>`).join('') || '<p class="mut">Sem itens.</p>'}`;
 }
 
 // ---- SM-2 ----
@@ -279,7 +330,7 @@ function rate(id, q) {
 document.addEventListener('click', e => {
   const t = e.target.closest('[data-act]'); if (!t) return;
   const a = t.dataset.act, d = t.dataset, rerender = () => { const y = window.scrollY; route(); window.scrollTo(0, y); };
-  if (a === 'flow') { state.flow = { i: +d.i, at: DATA.fluxos.filter(x => inMod(x, curMod()))[+d.i].inicio, path: [] }; rerender(); }
+  if (a === 'flow') { state.flow = { i: +d.i, at: DATA.fluxos[+d.i].inicio, path: [] }; rerender(); }
   else if (a === 'flowgo') { state.flow.path.push({ id: state.flow.at, ans: d.ans }); state.flow.at = d.to; rerender(); }
   else if (a === 'flip') { state.show = !state.show; rerender(); }
   else if (a === 'rate') { rate(d.id, +d.q); state.show = false; rerender(); }
@@ -290,6 +341,8 @@ document.addEventListener('click', e => {
       store.set('errcards', ec); delete cs[id]; store.set('cards', cs);
     }
     rerender(); }
+  else if (a === 'sg') { const sel = new Set(store.get('sgrp', null) || SGRUPOS.map(g => g[0])); sel.has(d.g) ? sel.delete(d.g) : sel.add(d.g); store.set('sgrp', [...sel]); rerender(); }
+  else if (a === 'sgall') { store.set('sgrp', d.v === '1' ? SGRUPOS.map(g => g[0]) : []); rerender(); }
   else if (a === 'dload') carregarDoutrina(d.id);
   else if (a === 'dread') { const l = store.get('dread', {}); l[d.id] ? delete l[d.id] : (l[d.id] = 1); store.set('dread', l); const open = [...document.querySelectorAll('details[open]')].map(e => e.dataset.id || e.querySelector('summary')?.textContent.slice(0, 20)); rerender(); document.querySelectorAll('details').forEach(e => { if (open.includes(e.dataset.id || e.querySelector('summary')?.textContent.slice(0, 20))) e.open = true; }); }
   else if (a === 'dup') { state.dup = !state.dup; rerender(); }
@@ -313,6 +366,9 @@ document.addEventListener('change', e => {
 });
 window.addEventListener('hashchange', () => { state.flow = null; state.show = false; route(); });
 
+function herdaEnam() {   // o ENAM usa o mesmo conteúdo da magistratura (estadual/federal)
+  ['leis', 'sumulas', 'principios', 'enunciados', 'juris', 'doutrina', 'mapas', 'fluxos', 'exemplos', 'cards', 'questoes', 'discursivas', 'orais'].forEach(k => (DATA[k] || []).forEach(x => { if (x.mods && (x.mods.includes('magsc') || x.mods.includes('magfed')) && !x.mods.includes('enam')) x.mods = x.mods.concat('enam'); }));
+}
 // ---- Boot: carrega leis completas (se houver) e inicia ----
 function loadScript(src) { return new Promise(r => { const s = document.createElement('script'); s.src = src; s.onload = s.onerror = r; document.head.appendChild(s); }); }
 (async () => {
@@ -324,6 +380,7 @@ function loadScript(src) { return new Promise(r => { const s = document.createEl
     else { const o = { tribunal: x.tribunal, n: x.n, materia: x.materia || 'Geral', texto: x.texto, vinculante: x.vinculante, orgao: x.orgao, data: x.data, mods: ALLM, f: {} }; DATA.sumulas.push(o); idx.set(k, o); }
   });
   DATA.sumulas.sort((a, b) => (a.tribunal > b.tribunal ? 1 : a.tribunal < b.tribunal ? -1 : (parseInt(a.n) || 0) - (parseInt(b.n) || 0)));
+  herdaEnam();
   route();
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
   const files = window.LEI_FILES || []; let feitos = 0, i = 0;
@@ -331,7 +388,7 @@ function loadScript(src) { return new Promise(r => { const s = document.createEl
   if (files.length) document.body.appendChild(ld);
   const worker = async () => { while (i < files.length) { const f = files[i++]; await loadScript('data/leis/' + f); ld.textContent = '⏳ Carregando leis ' + (++feitos) + '/' + files.length; } };
   await Promise.all([worker(), worker(), worker(), worker(), worker(), worker()]);
-  ld.remove();
+  ld.remove(); herdaEnam();
   // lei importada com mesmo id substitui a amostra
   const map = new Map(); DATA.leis.forEach(l => map.set(l.id, l)); DATA.leis = [...map.values()];
   if (!document.activeElement || !['TEXTAREA', 'INPUT'].includes(document.activeElement.tagName)) { const y = window.scrollY; route(); window.scrollTo(0, y); }

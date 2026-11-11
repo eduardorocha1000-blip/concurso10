@@ -7,7 +7,8 @@ from statistics import median
 RAIZ = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 segs = json.load(open(os.path.join(RAIZ, "dados", "doutrina", "segmentos.json"), encoding="utf-8"))
 OUT = os.path.join(RAIZ, "data", "doutrina"); os.makedirs(OUT, exist_ok=True)
-for f in os.listdir(OUT): os.remove(os.path.join(OUT, f))
+import shutil
+shutil.rmtree(OUT, ignore_errors=True); os.makedirs(OUT, exist_ok=True)
 ruido = re.compile(r"^(?:VOLUME\s+[IVX]+.*|.*FASC[ÍI]CULOS?\s+\d+.{0,60}|CONCURSOS P[ÚU]BLICOS.*|DIREITO (?:ADMINISTRATIVO|CIVIL|PENAL|PROCESSUAL CIVIL|PROCESSUAL PENAL|DO CONSUMIDOR|EMPRESARIAL|CONSTITUCIONAL))$")
 ruido0 = re.compile(r"^(?:.*P[áa]gina\s+\d+\s*|.*Fasc[íi]culos?\s+[\d A-Za-z]+\s*\|\s*\d+\s*|COLE[ÇC][ÃA]O DE DOUTRINA.*|CONCURSOS P[ÚU]BLICOS.*P[áa]gina.*)$")
 cab = re.compile(r"^(\d+(?:\.\d+)*\.?)\s+\S.{2,100}$")
@@ -83,6 +84,27 @@ def materia(disc, titulo, capa=""):
         for nome, rx in REGRAS.get(disc, []):
             if re.search(rx, t): return nome
     return NOME.get(disc, disc.title())
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from mapa_svg import svg_mapa
+os.makedirs(os.path.join(OUT, "mapas"), exist_ok=True)
+def arvore(blocos, titulo):
+    """Árvore do capítulo a partir dos títulos numerados (1., 1.1, 1.1.1)."""
+    raiz = {"t": titulo, "c": []}; pilha = [(0, raiz)]
+    for tipo, txt in blocos:
+        if tipo != "h": continue
+        m = re.match(r"^(\d+(?:\.\d+)*)\.?\s+(.+)$", txt)
+        if not m: continue
+        nome = m.group(2).strip()
+        if re.match(r"(?i)^(sum[áa]rio|refer[êe]ncias|quest[õo]es|casos pr[áa]ticos|objetivos|como estudar)", nome): continue
+        nome = nome.capitalize() if nome.isupper() else nome
+        nv = m.group(1).count(".") + 1
+        if nv > 2: continue
+        while pilha and pilha[-1][0] >= nv: pilha.pop()
+        no = {"t": nome, "c": []}; pilha[-1][1]["c"].append(no); pilha.append((nv, no))
+    raiz["c"] = raiz["c"][:14]
+    for n in raiz["c"]: n["c"] = n["c"][:8]
+    return raiz
 idx = []
 for k, s in enumerate(segs):
     b = blocos(s["texto"])
@@ -92,8 +114,10 @@ for k, s in enumerate(segs):
     if "CONCURSOS" in tt.upper() or len(tt.strip()) < 15:
         hs = [x[1] for x in b if x[0] == "h" and re.match(r"\d+\.", x[1]) and "SUM" not in x[1].upper()][:2]
         if hs: tt = " / ".join(re.sub(r"^\d+\.\s*", "", h) for h in hs)
+    ar = arvore(b, (curto(tt) or tt)[:90]); tem_mapa = len(ar["c"]) >= 3
+    if tem_mapa: open(os.path.join(OUT, "mapas", fid + ".svg"), "w", encoding="utf-8").write(svg_mapa(ar["t"], ar))
     st = "unico" if "grupo" not in s else ("manter" if s["manter"] else "dup")
-    idx.append({"id": fid, "disc": s["disciplina"], "titulo": (curto(tt) or tt)[:120], "materia": materia(s["disciplina"], tt, " ".join(l for l in s["texto"][:500].split(chr(10)) if re.search(r"(?i)direito|volume", l))), "ordem": num, "paginas": s["paginas"], "status": st,
+    idx.append({"id": fid, "disc": s["disciplina"], "titulo": (curto(tt) or tt)[:120], "materia": materia(s["disciplina"], tt, " ".join(l for l in s["texto"][:500].split(chr(10)) if re.search(r"(?i)direito|volume", l))), "ordem": num, "mapa": tem_mapa, "paginas": s["paginas"], "status": st,
                 "grupo": s.get("grupo"), "parecidos": [f"f{x:03d}" for x in s.get("parecidos", [])], "origem": s["arquivo"].replace("ilovepdf_merged", "m") + " p." + str(s["pag_ini"])})
 open(os.path.join(OUT, "index.js"), "w", encoding="utf-8").write("window.DOUTRINA_IDX=" + json.dumps(idx, ensure_ascii=False) + ";\n")
 print(len(idx), "fascículos;", sum(i["status"] == "dup" for i in idx), "marcados como possível duplicata;", sum(os.path.getsize(os.path.join(OUT, f)) for f in os.listdir(OUT)) // 1024, "KB")

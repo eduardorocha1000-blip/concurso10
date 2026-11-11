@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 602 520" width="602" height="520" font-family="Segoe UI,Roboto,Arial,sans-serif" font-size="13">
+<rect width="100%" height="100%" fill="#ffffff"/><text x="14" y="22" font-size="15" font-weight="700" fill="#0f172a">Competência cível</text><g transform="translate(0,34)">
+<path d="M115,253 C143,253 143,66 171,66" fill="none" stroke="#1e6fb8" stroke-width="2.2" opacity=".75"/>
+<path d="M272,66 C300,66 300,15 328,15" fill="none" stroke="#1e6fb8" stroke-width="1.4" opacity=".75"/>
+<path d="M272,66 C300,66 300,49 328,49" fill="none" stroke="#1e6fb8" stroke-width="1.4" opacity=".75"/>
+<path d="M272,66 C300,66 300,83 328,83" fill="none" stroke="#1e6fb8" stroke-width="1.4" opacity=".75"/>
+<path d="M272,66 C300,66 300,117 328,117" fill="none" stroke="#1e6fb8" stroke-width="1.4" opacity=".75"/>
+<path d="M115,253 C143,253 143,185 171,185" fill="none" stroke="#8a1c3c" stroke-width="2.2" opacity=".75"/>
+<path d="M272,185 C300,185 300,151 328,151" fill="none" stroke="#8a1c3c" stroke-width="1.4" opacity=".75"/>
+<path d="M272,185 C300,185 300,185 328,185" fill="none" stroke="#8a1c3c" stroke-width="1.4" opacity=".75"/>
+<path d="M272,185 C300,185 300,219 328,219" fill="none" stroke="#8a1c3c" stroke-width="1.4" opacity=".75"/>
+<path d="M115,253 C143,253 143,321 171,321" fill="none" stroke="#1f7a4d" stroke-width="2.2" opacity=".75"/>
+<path d="M272,321 C300,321 300,253 328,253" fill="none" stroke="#1f7a4d" stroke-width="1.4" opacity=".75"/>
+<path d="M272,321 C300,321 300,287 328,287" fill="none" stroke="#1f7a4d" stroke-width="1.4" opacity=".75"/>
+<path d="M272,321 C300,321 300,321 328,321" fill="none" stroke="#1f7a4d" stroke-width="1.4" opacity=".75"/>
+<path d="M272,321 C300,321 300,355 328,355" fill="none" stroke="#1f7a4d" stroke-width="1.4" opacity=".75"/>
+<path d="M272,321 C300,321 300,389 328,389" fill="none" stroke="#1f7a4d" stroke-width="1.4" opacity=".75"/>
+<path d="M115,253 C143,253 143,440 171,440" fill="none" stroke="#5b3a9a" stroke-width="2.2" opacity=".75"/>
+<path d="M272,440 C300,440 300,423 328,423" fill="none" stroke="#5b3a9a" stroke-width="1.4" opacity=".75"/>
+<path d="M272,440 C300,440 300,457 328,457" fill="none" stroke="#5b3a9a" stroke-width="1.4" opacity=".75"/>
+<g><title>Matéria</title><rect x="328" y="2" width="260" height="26" rx="8" fill="#f8fafc" stroke="#1e6fb8" stroke-width="1.3"/><text x="339" y="20" fill="#0f172a">Matéria</text></g>
+<g><title>Pessoa</title><rect x="328" y="36" width="260" height="26" rx="8" fill="#f8fafc" stroke="#1e6fb8" stroke-width="1.3"/><text x="339" y="54" fill="#0f172a">Pessoa</text></g>
+<g><title>Função</title><rect x="328" y="70" width="260" height="26" rx="8" fill="#f8fafc" stroke="#1e6fb8" stroke-width="1.3"/><text x="339" y="88" fill="#0f172a">Função</text></g>
+<g><title>Conhecível de ofício</title><rect x="328" y="104" width="260" height="26" rx="8" fill="#f8fafc" stroke="#1e6fb8" stroke-width="1.3"/><text x="339" y="122" fill="#0f172a">Conhecível de ofício</text></g>
+<g><title>Absoluta</title><rect x="171" y="53" width="101" height="26" rx="8" fill="#1e6fb8" stroke="#1e6fb8" stroke-width="1.3"/><text x="182" y="70" fill="#fff" font-weight="700">Absoluta</text></g>
+<g><title>Valor</title><rect x="328" y="138" width="260" height="26" rx="8" fill="#f8fafc" stroke="#8a1c3c" stroke-width="1.3"/><text x="339" y="156" fill="#0f172a">Valor</text></g>
+<g><title>Território</title><rect x="328" y="172" width="260" height="26" rx="8" fill="#f8fafc" stroke="#8a1c3c" stroke-width="1.3"/><text x="339" y="190" fill="#0f172a">Território</text></g>
+<g><title>Prorroga se não arguida (art. 64)</title><rect x="328" y="206" width="260" height="26" rx="8" fill="#f8fafc" stroke="#8a1c3c" stroke-width="1.3"/><text x="339" y="224" fill="#0f172a">Prorroga se não arguida (art. 64)</text></g>
+<g><title>Relativa</title><rect x="171" y="172" width="101" height="26" rx="8" fill="#8a1c3c" stroke="#8a1c3c" stroke-width="1.3"/><text x="182" y="190" fill="#fff" font-weight="700">Relativa</text></g>
+<g><title>Domicílio do réu – art. 46</title><rect x="328" y="240" width="260" height="26" rx="8" fill="#f8fafc" stroke="#1f7a4d" stroke-width="1.3"/><text x="339" y="258" fill="#0f172a">Domicílio do réu – art. 46</text></g>
+<g><title>Imóveis – art. 47</title><rect x="328" y="274" width="260" height="26" rx="8" fill="#f8fafc" stroke="#1f7a4d" stroke-width="1.3"/><text x="339" y="292" fill="#0f172a">Imóveis – art. 47</text></g>
+<g><title>Herança – art. 48</title><rect x="328" y="308" width="260" height="26" rx="8" fill="#f8fafc" stroke="#1f7a4d" stroke-width="1.3"/><text x="339" y="326" fill="#0f172a">Herança – art. 48</text></g>
+<g><title>Alimentos – art. 53, II</title><rect x="328" y="342" width="260" height="26" rx="8" fill="#f8fafc" stroke="#1f7a4d" stroke-width="1.3"/><text x="339" y="360" fill="#0f172a">Alimentos – art. 53, II</text></g>
+<g><title>Divórcio – art. 53, I</title><rect x="328" y="376" width="260" height="26" rx="8" fill="#f8fafc" stroke="#1f7a4d" stroke-width="1.3"/><text x="339" y="394" fill="#0f172a">Divórcio – art. 53, I</text></g>
+<g><title>Foros</title><rect x="171" y="308" width="101" height="26" rx="8" fill="#1f7a4d" stroke="#1f7a4d" stroke-width="1.3"/><text x="182" y="326" fill="#fff" font-weight="700">Foros</text></g>
+<g><title>Conexão / continência</title><rect x="328" y="410" width="260" height="26" rx="8" fill="#f8fafc" stroke="#5b3a9a" stroke-width="1.3"/><text x="339" y="428" fill="#0f172a">Conexão / continência</text></g>
+<g><title>Foro de eleição – art. 63</title><rect x="328" y="444" width="260" height="26" rx="8" fill="#f8fafc" stroke="#5b3a9a" stroke-width="1.3"/><text x="339" y="462" fill="#0f172a">Foro de eleição – art. 63</text></g>
+<g><title>Modificação</title><rect x="171" y="427" width="101" height="26" rx="8" fill="#5b3a9a" stroke="#5b3a9a" stroke-width="1.3"/><text x="182" y="444" fill="#fff" font-weight="700">Modificação</text></g>
+<g><title>Competência</title><rect x="14" y="240" width="101" height="26" rx="8" fill="#334155" stroke="#334155" stroke-width="1.3"/><text x="25" y="258" fill="#fff" font-weight="700">Competência</text></g>
+</g></svg>

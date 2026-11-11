@@ -157,6 +157,9 @@ class H(SimpleHTTPRequestHandler):
     extensions_map = dict(SimpleHTTPRequestHandler.extensions_map, **{".js": "text/javascript; charset=utf-8"})
     def __init__(s, *a, **k): super().__init__(*a, directory=RAIZ, **k)
     def log_message(s, f, *a): pass
+    def end_headers(s):
+        s.send_header("Cache-Control", "no-cache")   # sempre revalida (o app muda com frequência); o service worker cuida do offline
+        super().end_headers()
     def _json(s, obj, code=200):
         b = json.dumps(obj, ensure_ascii=False).encode("utf-8")
         s.send_response(code); s.send_header("Content-Type", "application/json; charset=utf-8"); s.send_header("Content-Length", str(len(b))); s.send_header("Cache-Control", "no-store"); s.end_headers(); s.wfile.write(b)

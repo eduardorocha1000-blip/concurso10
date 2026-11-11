@@ -61,3 +61,10 @@ Rode `tools/iniciar_app.bat` (ou `python tools/servidor.py`): o servidor local s
 ## Leis e súmulas
 - 79 leis completas (`tools/lote_leis.py` importa um lote do Planalto; o atualizador diário as renova).
 - Súmulas: STF (782 de 799) e STJ (649, do PDF oficial `SumulasSTJ.pdf`; súmulas posteriores a esse PDF não estão incluídas — `python tools/importar_sumulas_stj.py`).
+
+## ENAM, súmulas por grupo, mapas em imagem e prática dentro da doutrina
+- **Módulo ENAM** (📝): guia com estrutura da prova (80 questões, FGV/ENFAM — dados de fontes secundárias: **confira o edital**), distribuição por disciplina, horas semanais proporcionais e progresso de leitura da doutrina. Usa os mesmos conteúdos da magistratura (leis, súmulas, jurisprudência, doutrina, prática).
+- **Súmulas por grupo:** abaixo do filtro, escolha STF, Vinculantes, STJ etc. TST/TSE/STM ficam vazios (sites bloqueiam robôs): copie para um CSV e rode `python tools/importar_sumulas_csv.py dados/sumulas_tst.csv tst`.
+- **Mapas mentais em imagem (SVG):** os 4 mapas de exemplo (`python tools/gerar_mapas.py`) e um mapa por capítulo da doutrina, gerado dos títulos do capítulo (`tools/importar_doutrina.py`; ficam em `data/doutrina/mapas/`, fora do repositório público).
+- **Prática dentro da doutrina:** aba "Doutrina e prática". Em cada disciplina (e em Sucessões/Família) há o bloco "Prática" com mapas, fluxogramas, exemplos, questões, flashcards, discursivas e prova oral. A revisão do dia com repetição espaçada continua em `#/m/<módulo>/cards`.
+- `tools/servidor.py` agora envia `Cache-Control: no-cache` (o navegador revalida os arquivos).

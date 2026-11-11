@@ -19,6 +19,10 @@ window.DATA = {
     { id: 'magfed', nome: 'Magistratura Federal', cor: '#5b3a9a', icone: '🏛️',
       desc: 'Juiz Federal Substituto (TRF4 para SC). Objetiva, discursivas, sentenças, oral.',
       editais: [],
-      materias: ['Direito Constitucional','Direito Administrativo','Direito Civil','Processo Civil','Direito Penal','Processo Penal','Direito Tributário','Direito Previdenciário','Direito Empresarial','Direito Econômico e Financeiro','Direito Internacional','Direitos Humanos','Formação Humanística','LOMAN'] }
+      materias: ['Direito Constitucional','Direito Administrativo','Direito Civil','Processo Civil','Direito Penal','Processo Penal','Direito Tributário','Direito Previdenciário','Direito Empresarial','Direito Econômico e Financeiro','Direito Internacional','Direitos Humanos','Formação Humanística','LOMAN'] },
+    { id: 'enam', nome: 'ENAM – Exame Nacional da Magistratura', cor: '#b45309', icone: '📝',
+      desc: 'Prova objetiva nacional (ENFAM/FGV) exigida antes dos concursos de ingresso na magistratura. 80 questões; eliminatória.',
+      editais: [],
+      materias: ['Direito Constitucional','Direito Civil','Direito Processual Civil','Direito Penal e Processual Penal','Direito Administrativo','Direitos Humanos','Direito Empresarial','Formação humanística e ética'] }
   ]
 };

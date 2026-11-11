@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 997 758" width="997" height="758" font-family="Segoe UI,Roboto,Arial,sans-serif" font-size="13">
+<rect width="100%" height="100%" fill="#ffffff"/><text x="14" y="22" font-size="15" font-weight="700" fill="#0f172a">Sucessões</text><g transform="translate(0,34)">
+<path d="M101,346 C129,346 129,49 157,49" fill="none" stroke="#1e6fb8" stroke-width="2.2" opacity=".75"/>
+<path d="M337,49 C365,49 365,15 393,15" fill="none" stroke="#1e6fb8" stroke-width="1.4" opacity=".75"/>
+<path d="M337,49 C365,49 365,49 393,49" fill="none" stroke="#1e6fb8" stroke-width="1.4" opacity=".75"/>
+<path d="M337,49 C365,49 365,83 393,83" fill="none" stroke="#1e6fb8" stroke-width="1.4" opacity=".75"/>
+<path d="M101,346 C129,346 129,262 157,262" fill="none" stroke="#8a1c3c" stroke-width="2.2" opacity=".75"/>
+<path d="M337,262 C365,262 365,168 393,168" fill="none" stroke="#8a1c3c" stroke-width="1.4" opacity=".75"/>
+<path d="M746,168 C774,168 774,117 802,117" fill="none" stroke="#8a1c3c" stroke-width="1.4" opacity=".75"/>
+<path d="M746,168 C774,168 774,151 802,151" fill="none" stroke="#8a1c3c" stroke-width="1.4" opacity=".75"/>
+<path d="M746,168 C774,168 774,185 802,185" fill="none" stroke="#8a1c3c" stroke-width="1.4" opacity=".75"/>
+<path d="M746,168 C774,168 774,219 802,219" fill="none" stroke="#8a1c3c" stroke-width="1.4" opacity=".75"/>
+<path d="M337,262 C365,262 365,287 393,287" fill="none" stroke="#8a1c3c" stroke-width="1.4" opacity=".75"/>
+<path d="M746,287 C774,287 774,253 802,253" fill="none" stroke="#8a1c3c" stroke-width="1.4" opacity=".75"/>
+<path d="M746,287 C774,287 774,287 802,287" fill="none" stroke="#8a1c3c" stroke-width="1.4" opacity=".75"/>
+<path d="M746,287 C774,287 774,321 802,321" fill="none" stroke="#8a1c3c" stroke-width="1.4" opacity=".75"/>
+<path d="M337,262 C365,262 365,355 393,355" fill="none" stroke="#8a1c3c" stroke-width="1.4" opacity=".75"/>
+<path d="M101,346 C129,346 129,440 157,440" fill="none" stroke="#1f7a4d" stroke-width="2.2" opacity=".75"/>
+<path d="M337,440 C365,440 365,389 393,389" fill="none" stroke="#1f7a4d" stroke-width="1.4" opacity=".75"/>
+<path d="M337,440 C365,440 365,423 393,423" fill="none" stroke="#1f7a4d" stroke-width="1.4" opacity=".75"/>
+<path d="M337,440 C365,440 365,457 393,457" fill="none" stroke="#1f7a4d" stroke-width="1.4" opacity=".75"/>
+<path d="M337,440 C365,440 365,491 393,491" fill="none" stroke="#1f7a4d" stroke-width="1.4" opacity=".75"/>
+<path d="M101,346 C129,346 129,542 157,542" fill="none" stroke="#5b3a9a" stroke-width="2.2" opacity=".75"/>
+<path d="M337,542 C365,542 365,525 393,525" fill="none" stroke="#5b3a9a" stroke-width="1.4" opacity=".75"/>
+<path d="M337,542 C365,542 365,559 393,559" fill="none" stroke="#5b3a9a" stroke-width="1.4" opacity=".75"/>
+<path d="M101,346 C129,346 129,644 157,644" fill="none" stroke="#c2570c" stroke-width="2.2" opacity=".75"/>
+<path d="M337,644 C365,644 365,593 393,593" fill="none" stroke="#c2570c" stroke-width="1.4" opacity=".75"/>
+<path d="M337,644 C365,644 365,627 393,627" fill="none" stroke="#c2570c" stroke-width="1.4" opacity=".75"/>
+<path d="M337,644 C365,644 365,661 393,661" fill="none" stroke="#c2570c" stroke-width="1.4" opacity=".75"/>
+<path d="M337,644 C365,644 365,695 393,695" fill="none" stroke="#c2570c" stroke-width="1.4" opacity=".75"/>
+<g><title>Morte (real/presumida)</title><rect x="393" y="2" width="353" height="26" rx="8" fill="#f8fafc" stroke="#1e6fb8" stroke-width="1.3"/><text x="404" y="20" fill="#0f172a">Morte (real/presumida)</text></g>
+<g><title>Saisine – art. 1.784</title><rect x="393" y="36" width="353" height="26" rx="8" fill="#f8fafc" stroke="#1e6fb8" stroke-width="1.3"/><text x="404" y="54" fill="#0f172a">Saisine – art. 1.784</text></g>
+<g><title>Lei vigente à data da morte</title><rect x="393" y="70" width="353" height="26" rx="8" fill="#f8fafc" stroke="#1e6fb8" stroke-width="1.3"/><text x="404" y="88" fill="#0f172a">Lei vigente à data da morte</text></g>
+<g><title>Abertura</title><rect x="157" y="36" width="180" height="26" rx="8" fill="#1e6fb8" stroke="#1e6fb8" stroke-width="1.3"/><text x="168" y="54" fill="#fff" font-weight="700">Abertura</text></g>
+<g><title>Descendentes</title><rect x="802" y="104" width="180" height="26" rx="8" fill="#f8fafc" stroke="#8a1c3c" stroke-width="1.3"/><text x="813" y="122" fill="#0f172a">Descendentes</text></g>
+<g><title>Ascendentes</title><rect x="802" y="138" width="180" height="26" rx="8" fill="#f8fafc" stroke="#8a1c3c" stroke-width="1.3"/><text x="813" y="156" fill="#0f172a">Ascendentes</text></g>
+<g><title>Cônjuge/companheiro</title><rect x="802" y="172" width="180" height="26" rx="8" fill="#f8fafc" stroke="#8a1c3c" stroke-width="1.3"/><text x="813" y="190" fill="#0f172a">Cônjuge/companheiro</text></g>
+<g><title>Colaterais até 4º grau</title><rect x="802" y="206" width="180" height="26" rx="8" fill="#f8fafc" stroke="#8a1c3c" stroke-width="1.3"/><text x="813" y="224" fill="#0f172a">Colaterais até 4º grau</text></g>
+<g><title>Ordem do art. 1.829</title><rect x="393" y="155" width="353" height="26" rx="8" fill="#f8fafc" stroke="#8a1c3c" stroke-width="1.3"/><text x="404" y="172" fill="#0f172a">Ordem do art. 1.829</text></g>
+<g><title>Descendentes</title><rect x="802" y="240" width="180" height="26" rx="8" fill="#f8fafc" stroke="#8a1c3c" stroke-width="1.3"/><text x="813" y="258" fill="#0f172a">Descendentes</text></g>
+<g><title>Ascendentes</title><rect x="802" y="274" width="180" height="26" rx="8" fill="#f8fafc" stroke="#8a1c3c" stroke-width="1.3"/><text x="813" y="292" fill="#0f172a">Ascendentes</text></g>
+<g><title>Cônjuge</title><rect x="802" y="308" width="180" height="26" rx="8" fill="#f8fafc" stroke="#8a1c3c" stroke-width="1.3"/><text x="813" y="326" fill="#0f172a">Cônjuge</text></g>
+<g><title>Herdeiros necessários</title><rect x="393" y="274" width="353" height="26" rx="8" fill="#f8fafc" stroke="#8a1c3c" stroke-width="1.3"/><text x="404" y="292" fill="#0f172a">Herdeiros necessários</text></g>
+<g><title>Legítima = 50%</title><rect x="393" y="342" width="353" height="26" rx="8" fill="#f8fafc" stroke="#8a1c3c" stroke-width="1.3"/><text x="404" y="360" fill="#0f172a">Legítima = 50%</text></g>
+<g><title>Sucessão legítima</title><rect x="157" y="248" width="180" height="26" rx="8" fill="#8a1c3c" stroke="#8a1c3c" stroke-width="1.3"/><text x="168" y="266" fill="#fff" font-weight="700">Sucessão legítima</text></g>
+<g><title>Formas ordinárias: público, cerrado, particular</title><rect x="393" y="376" width="353" height="26" rx="8" fill="#f8fafc" stroke="#1f7a4d" stroke-width="1.3"/><text x="404" y="394" fill="#0f172a">Formas ordinárias: público, cerrado, particul…</text></g>
+<g><title>Especiais: marítimo, aeronáutico, militar</title><rect x="393" y="410" width="353" height="26" rx="8" fill="#f8fafc" stroke="#1f7a4d" stroke-width="1.3"/><text x="404" y="428" fill="#0f172a">Especiais: marítimo, aeronáutico, militar</text></g>
+<g><title>Capacidade: 16 anos</title><rect x="393" y="444" width="353" height="26" rx="8" fill="#f8fafc" stroke="#1f7a4d" stroke-width="1.3"/><text x="404" y="462" fill="#0f172a">Capacidade: 16 anos</text></g>
+<g><title>Disponível: 50%</title><rect x="393" y="478" width="353" height="26" rx="8" fill="#f8fafc" stroke="#1f7a4d" stroke-width="1.3"/><text x="404" y="496" fill="#0f172a">Disponível: 50%</text></g>
+<g><title>Sucessão testamentária</title><rect x="157" y="427" width="180" height="26" rx="8" fill="#1f7a4d" stroke="#1f7a4d" stroke-width="1.3"/><text x="168" y="444" fill="#fff" font-weight="700">Sucessão testamentária</text></g>
+<g><title>Indignidade (art. 1.814) – sentença</title><rect x="393" y="512" width="353" height="26" rx="8" fill="#f8fafc" stroke="#5b3a9a" stroke-width="1.3"/><text x="404" y="530" fill="#0f172a">Indignidade (art. 1.814) – sentença</text></g>
+<g><title>Deserdação (art. 1.961) – testamento</title><rect x="393" y="546" width="353" height="26" rx="8" fill="#f8fafc" stroke="#5b3a9a" stroke-width="1.3"/><text x="404" y="564" fill="#0f172a">Deserdação (art. 1.961) – testamento</text></g>
+<g><title>Exclusão</title><rect x="157" y="529" width="180" height="26" rx="8" fill="#5b3a9a" stroke="#5b3a9a" stroke-width="1.3"/><text x="168" y="546" fill="#fff" font-weight="700">Exclusão</text></g>
+<g><title>Judicial (art. 610 CPC)</title><rect x="393" y="580" width="353" height="26" rx="8" fill="#f8fafc" stroke="#c2570c" stroke-width="1.3"/><text x="404" y="598" fill="#0f172a">Judicial (art. 610 CPC)</text></g>
+<g><title>Extrajudicial (consenso, capazes, advogado)</title><rect x="393" y="614" width="353" height="26" rx="8" fill="#f8fafc" stroke="#c2570c" stroke-width="1.3"/><text x="404" y="632" fill="#0f172a">Extrajudicial (consenso, capazes, advogado)</text></g>
+<g><title>Foro: art. 48 CPC</title><rect x="393" y="648" width="353" height="26" rx="8" fill="#f8fafc" stroke="#c2570c" stroke-width="1.3"/><text x="404" y="666" fill="#0f172a">Foro: art. 48 CPC</text></g>
+<g><title>Prazo: 2 meses abertura / 12 meses fim</title><rect x="393" y="682" width="353" height="26" rx="8" fill="#f8fafc" stroke="#c2570c" stroke-width="1.3"/><text x="404" y="700" fill="#0f172a">Prazo: 2 meses abertura / 12 meses fim</text></g>
+<g><title>Inventário</title><rect x="157" y="631" width="180" height="26" rx="8" fill="#c2570c" stroke="#c2570c" stroke-width="1.3"/><text x="168" y="648" fill="#fff" font-weight="700">Inventário</text></g>
+<g><title>Sucessões</title><rect x="14" y="334" width="87" height="26" rx="8" fill="#334155" stroke="#334155" stroke-width="1.3"/><text x="25" y="351" fill="#fff" font-weight="700">Sucessões</text></g>
+</g></svg>
