@@ -117,7 +117,7 @@ for (const colecao of ['principios', 'doutrina', 'exemplos', 'questoes', 'cards'
 }
 // capítulos da doutrina própria
 const dir = path.join(R, 'data/doutrina');
-if (fs.existsSync(dir)) fs.readdirSync(dir).filter(f => /^[fi]\d+\.js$/.test(f)).forEach(f => {
+if (fs.existsSync(dir)) fs.readdirSync(dir).filter(f => /^[fic]\d+\.js$/.test(f)).forEach(f => {
   const w = { DOUT: {} }; vm.runInNewContext(fs.readFileSync(path.join(dir, f), 'utf8'), { window: w }); const id = f.slice(0, -3);
   CONF['cap:' + id] = conferir(strs(w.DOUT[id]).join(' ').replace(/\s+/g, ' '));
 });
