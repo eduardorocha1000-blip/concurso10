@@ -42,7 +42,7 @@ def meta(nome):
     n = nome.replace("_", " ")
     d = "OUTRA"
     for rx, v in ((r"^Direito Administrativo", "DIREITO ADMINISTRATIVO"), (r"^Direito Civil|^Direito Real", "DIREITO CIVIL"), (r"^Direito Constitucional", "CONSTITUCIONAL"), (r"^Direito Empresarial", "DIREITO EMPRESARIAL"),
-                  (r"^Direito Penal", "DIREITO PENAL"), (r"^Direito Processual Civil|^Processo Civil", "DIREITO PROCESSUAL CIVIL"), (r"^Direito Processual Penal|^Processo Penal", "DIREITO PROCESSUAL PENAL"), (r"^Direito do Consumidor", "DIREITO DO CONSUMIDOR"),
+                  (r"^Direito Penal|^OAB 47", "DIREITO PENAL"), (r"^Direito Processual Civil|^Processo Civil", "DIREITO PROCESSUAL CIVIL"), (r"^Direito Processual Penal|^Processo Penal", "DIREITO PROCESSUAL PENAL"), (r"^Direito do Consumidor", "DIREITO DO CONSUMIDOR"),
                   (r"^Fasciculo (14|15|16|17|18|19)", "DIREITO ADMINISTRATIVO")):
         if re.search(rx, n): d = v; break
     m = re.search(r"Fasciculos?\s+(\d+)", n); num = int(m.group(1)) if m else 0
@@ -88,14 +88,22 @@ REGRAS = {
    ("Agentes Públicos e Regime Disciplinar", "agentes|disciplinar|servidor|pad"), ("Serviços Públicos, Regulação e Estatais", "servico|concess|regula|agencia|economic|ppp|estatais|digital|13.303"),
    ("Bens Públicos e Intervenção na Propriedade", "bens publicos|propriedade|desapropri|interven"), ("Responsabilidade Civil do Estado", "responsabilidade civil"), ("Administração Municipal", "municipal"),
    ("Processo Administrativo, Controle e Fazenda Pública", "controle|tribunais de contas|tce|processo administrativo|fazenda|judicializacao|sancionador|revisao|simulado|precatorios")],
- "DIREITO CIVIL": [("Revisão e simulados", "simulado|revisao integrada|revisao geral"), ("Garantias e Propriedade Fiduciária", "fiduciari|hipoteca|penhor|anticrese|garantias reais"), ("Direitos Reais", "reais|posse|propriedade|usucap|condominio|laje|superficie|vizinhanca|usufruto|servidoes|uso e habitacao|promitente"),
-   ("Família", "familia|tutela|curatela|decisao apoiada"), ("Sucessões", "sucess|legados|inventario|heranca|testament"), ("Responsabilidade Civil", "responsabilidade"), ("Contratos", "contrat|seguro|corretagem|transporte|renda|jogo|fianca|transacao|compromisso|comissao|agencia|vicios|aleatorios|evicao|compra e venda|troca|doacao|locacao|emprestimo|prestacao de servicos|empreitada|deposito|mandato"),
+ "DIREITO CIVIL": [("Revisão e simulados", "simulado|revisao integrada|revisao geral|revisao dirigida|caderno|folha de respostas|gabarito analitico|errata|lote |atualizacao aprofundada"),
+   ("Prescrição e Decadência", "prescricao"), ("LINDB", "lindb|introducao as normas"),
+   ("Títulos de Crédito", "titulos? de credito|letra de cambio|cheque|duplicata|cedula de credito|ccb|cpr e titulos"),
+   ("Contratos Bancários e Crédito", "bancari|conta-corrente|cartao de credito|consignado|tarifas, seguros|pix|superendividamento|abertura de credito|contas de pagamento"),
+   ("Direito Imobiliário", "multipropriedade|condominio de lotes|parcelamento do solo|incorporacao|patrimonio de afetacao|distrato imobiliario|built|adjudicacao compulsoria|reurb|registro imobiliario|loteamento"),
+   ("Direito Digital e Herança Digital", "digital|criptoativ|plataformas|dados pessoais apos"),
+   ("Direito de Empresa e Sociedades", "sociedade|empresari|estabelecimento|franquia|factoring|leasing|arrendamento mercantil|cooperativ|comandita|associacoes|fundacoes|pessoas juridicas|desconsideracao|prepostos|registro publico de empresas|escrituracao empresarial|representacao comercial|transferencia de tecnologia|engenharia|concessao comercial|nome empresarial|publicidade, prova, sigilo"),
+   ("Obrigações", "promessa de recompensa|gestao de negocios|pagamento indevido|enriquecimento"),
+ ("Garantias e Propriedade Fiduciária", "fiduciari|hipoteca|penhor|anticrese|garantias reais"), ("Direitos Reais", "reais|posse|propriedade|usucap|condominio|laje|superficie|vizinhanca|usufruto|servidoes|uso e habitacao|promitente"),
+   ("Família", "familia|tutela|curatela|decisao apoiada|adocao|poder familiar|filiacao|reproducao humana|casamento|uniao estavel|alimentos, guarda"), ("Sucessões", "sucess|legados|inventario|heranca|testament"), ("Responsabilidade Civil", "responsabilidade"), ("Contratos", "contrat|seguro|corretagem|transporte|renda|jogo|fianca|transacao|compromisso|comissao|agencia|vicios|aleatorios|evicao|compra e venda|troca|doacao|locacao|emprestimo|prestacao de servicos|empreitada|deposito|mandato"),
    ("Obrigações", "obriga|adimplemento|inadimpl|pagamento|transmiss|extincao")],
  "DIREITO PROCESSUAL CIVIL": [("Recursos e Precedentes", "recurso|apelacao|precedente|irdr|reclamacao|embargos"), ("Execução e Cumprimento de Sentença", "execu|cumprimento|fiscal|insolv"), ("Procedimentos Especiais", "procedimentos especiais|monitoria|alimentos|locatic|inventario|oposicao|jurisdicao voluntaria|consignacao|dissolucao|juizados|restauracao"),
    ("Processo Coletivo e Ações Constitucionais", "coletiv|mandado de seguranca|acoes constitucionais|saude, educacao|estruturais"), ("Provas", "prova"), ("Tutela Provisória", "tutela provisoria"), ("Revisão e Simulados", "simulado|revisao"), ("Sentença e Coisa Julgada", "sentenca|coisa julgada")],
  "DIREITO PROCESSUAL PENAL": [("Recursos e Execução Penal", "recurso|execucao"), ("Prisões e Medidas Cautelares", "prisoes|prisao|cautelar|assecurat"), ("Provas", "prova|pericia|medicina legal|cibernetic"), ("Procedimentos, Nulidades e Legislação Especial", "procedimento|nulidade|legislacao|hediondos|juizados|atos processuais"),
    ("Jurisdição, Competência e Sujeitos", "jurisdicao|competencia|sujeitos|organizacao judiciaria"), ("Ação Penal e Investigação", "acao penal|principios|investig|inquerito"), ("Direitos Humanos e Revisão", "direitos humanos|revisao|atualizacao|probatoria")],
- "DIREITO PENAL": [("Revisão e simulados", "simulado|revisao"), ("Parte Geral e Penas", "teoria geral|penas|dosimetria"), ("Crimes em Espécie", "crimes|dignidade|administracao|propriedade")],
+ "DIREITO PENAL": [("Exame de Ordem (OAB): peça e questões", "exame de ordem|oab 47|modelo de resolucao"), ("Revisão e simulados", "simulado|revisao"), ("Parte Geral e Penas", "teoria geral|penas|dosimetria"), ("Crimes em Espécie", "crimes|dignidade|administracao|propriedade")],
  "CONSTITUCIONAL": [("Direito Constitucional", ".")], "DIREITO EMPRESARIAL": [("Direito Empresarial", ".")], "DIREITO DO CONSUMIDOR": [("Direito do Consumidor", ".")]}
 PADRAO = {"DIREITO ADMINISTRATIVO": "Teoria Geral do Direito Administrativo", "DIREITO CIVIL": "Parte Geral do Direito Civil", "DIREITO PROCESSUAL CIVIL": "Processo de Conhecimento e Teoria Geral", "DIREITO PROCESSUAL PENAL": "Outros Temas de Processo Penal", "DIREITO PENAL": "Direito Penal"}
 def materia(disc, titulo, nome):
@@ -132,8 +140,8 @@ def titulo_arquivo(nome, linhas):
 
 # ---------------- seções ----------------
 RX_CASOS = re.compile(r"^(?:\d+\.\s*)?casos?\s+(?:pr[áa]ticos?|concretos?|e\s+quest)", re.I)
-RX_OBJ = re.compile(r"^(?:\d+\.\s*)?(?:quest[õo]es\s+(?:objetivas?|comentadas|de m[úu]ltipla|de fixa[çc][ãa]o|autorais|de prova|tipo)|gabarito objetivo|simulado objetivo|exerc[íi]cios? de fixa)", re.I)
-RX_FIM2 = re.compile(r"^(?:\d+\.\s*)(?:plano de estudo|revis[ãa]o final|s[íi]ntese|quadro|checklist|mapa|erros|pontos de alta)", re.I)
+RX_OBJ = re.compile(r"^(?:\d+\.\s*)?(?:quest[õo]es\s*$|quest[õo]es\s+(?:objetivas?|comentadas|de m[úu]ltipla|de fixa[çc][ãa]o|autorais|de prova|tipo)|gabarito objetivo|simulado objetivo|exerc[íi]cios? de fixa)", re.I)
+RX_FIM2 = re.compile(r"^(?:\d+\.\s*)?(?:roteiro de prova|s[íi]ntese para prova|s[íi]ntese para revis|plano de estudo|revis[ãa]o final|quadro|checklist|mapa|erros|pontos de alta)", re.I)
 RX_DISC = re.compile(r"^(?:\d+\.\s*)?(?:quest[õo]es\s+discursivas?|simulado discursivo)\b", re.I)
 RX_FIM = re.compile(r"^(?:\d+\.\s*)?(?:refer[êe]ncias|fontes (?:normativas|oficiais)|revis[ãa]o e refer|quadro (?:de revis[ãa]o|geral)|checklist|gabarito e plano|plano de estudo|roteiro de resolu|gabarito anal[íi]tico|mapa de revis)", re.I)
 
@@ -171,6 +179,9 @@ def parse_casos(ls):
         m = re.match(r"^\s*Caso\s+(\d+)\s*(?:[—–:.\-]\s*(.*))?$", l, re.I)
         if m: cur = {"n": int(m.group(1)), "titulo": limpa(m.group(2) or ""), "corpo": []}; casos.append(cur)
         elif cur is not None: cur["corpo"].append(l)
+    if not casos:
+        txt = limpa(" ".join(l for l in ls if l.strip()))
+        return [{"n": 1, "t": "", "e": txt, "s": ""}] if len(txt) > 40 else []
     res = []
     for c in casos:
         txt = " ".join(x.strip() for x in c["corpo"] if x.strip())
@@ -186,7 +197,7 @@ def parse_casos(ls):
         res.append({"n": c["n"], "t": limpa(titulo), "e": enun, "s": sol})
     return res
 
-GAB = re.compile(r"^\s*(?:Gabarito|Coment[áa]rio|Resposta)(?:\s+comentad[oa])?\s*:?\s*\(?([A-Ea-e])\)?[.:;)]?(?:\s+(.*))?$", re.I)
+GAB = re.compile(r"^\s*(?:Gabarito|Coment[áa]rio|Resposta)(?:\s+comentad[oa])?\s*:?\s*\(?([A-Ea-e])(?:\)|[.:;]|$)\s*(.*)$", re.I)
 GABIN = re.compile(r"\b(?:Gabarito|Coment[áa]rio|Resposta)(?:\s+comentad[oa])?\s*:?\s*\(?([A-E])\)?[.:;)]?(?:\s+(.*))?$")
 def _alts(e):
     pos, letra = [], 0
@@ -218,6 +229,37 @@ def parse_obj(ls, chave_final=None):
         if len(alts) < 2 and not g: continue
         res.append({"n": q["n"], "e": e, "a": alts, "g": g, "c": c})
     return res
+
+def parse_qa(ls):
+    """Pergunta + 'Comentário:'/'Resposta:' (sem alternativas). Pergunta pode vir como 'Questão: ...' ou 'N. ...'."""
+    res, cur = [], None
+    for l in ls:
+        t = l.strip()
+        if not t: continue
+        mc = re.match(r"^(?:Coment[áa]rio|Resposta|Gabarito)\s*:\s*(.*)$", t, re.I)
+        if mc and cur is not None: cur["_c"] = True; cur["c"].append(mc.group(1)); continue
+        m = re.match(r"^Quest[ãa]o\s*(?:\d+)?\s*:\s*(.*)$", t, re.I) or re.match(r"^(?:Quest[ãa]o\s+)?\d{1,3}\s*[.)—–-]\s+(.*)$", t)
+        if m and (cur is None or cur["_c"]):
+            cur = {"n": len(res) + 1, "e": [m.group(1)], "a": [], "g": None, "c": [], "_c": False}; res.append(cur); continue
+        if cur is None: continue
+        (cur["c"] if cur["_c"] else cur["e"]).append(t)
+    if not any(q["_c"] for q in res):
+        txt = limpa(" ".join(l for l in ls if l.strip()))
+        sent = re.split(r"(?<=[.?!])\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ])", txt); qs, cur2 = [], None
+        for st in sent:
+            if st.endswith("?"):
+                if cur2 and not cur2["c"]: cur2["e"] += " " + st
+                else: cur2 = {"e": st, "c": []}; qs.append(cur2)
+            elif cur2 is not None: cur2["c"].append(st)
+        return [{"n": k + 1, "e": q["e"], "a": [], "g": None, "c": " ".join(q["c"])} for k, q in enumerate(qs) if q["c"]]
+    out = []
+    for q in res:
+        e, c = limpa(" ".join(q["e"])), limpa(" ".join(q["c"]))
+        if not c:
+            m = re.search(r"\s(?:Resposta|Coment[áa]rio)\s*:\s*", e)
+            if m: e, c = e[: m.start()].strip(), e[m.end():].strip()
+        if c: out.append({"n": len(out) + 1, "e": e, "a": [], "g": None, "c": c})
+    return out
 
 def parse_disc(ls):
     its, cur, esperado = [], None, None
@@ -301,8 +343,13 @@ def estruturar(linhas, nome):
         i = ult[k]; fim = min([p for p in posicoes if p > i] or [len(ls)])
         return ls[i + 1: fim]
     ci, oi, di = ult.get("casos"), ult.get("obj"), ult.get("disc")
-    casos = parse_casos(trecho("casos")) if ci is not None else []
+    casos = []; iq = None; tc = []
+    if ci is not None:
+        tc = trecho("casos"); iq = next((k for k, l in enumerate(tc) if re.match(r"^\s*Quest[ãa]o\s*:", l)), None)
+        casos = parse_casos(tc[:iq] if iq is not None else tc)
     obj = parse_obj(trecho("obj")) if oi is not None else []
+    if oi is not None and not obj: obj = parse_qa(trecho("obj"))
+    if ci is not None and not obj and iq is not None: obj = parse_qa(tc[iq:])
     disc = parse_disc(trecho("disc")) if di is not None else []
     # questões embutidas na seção de casos ("Casos práticos e questões comentadas")
     if ci is not None and not obj and any(re.match(r"^\s*\(?[A-E]\)\s", l) for l in trecho("casos")): obj = parse_obj(trecho("casos"))
@@ -319,7 +366,7 @@ arqs = sorted(f for f in os.listdir(PASTA) if f.lower().endswith(".pdf"))
 cap = []
 for f in arqs:
     nome = f[:-4]
-    if nome.startswith("Relatorio_"): continue
+    if nome.startswith(("Relatorio_", "Auditoria_", "Indice_", "Protocolo_")): continue
     linhas = ler(os.path.join(PASTA, f))
     disc, num_arq = meta(nome)
     bruto = [l for l in linhas if l.strip()]
@@ -334,6 +381,29 @@ for f in arqs:
                 tit = m.group(2); k = a + 1
                 while k < b and linhas[k].strip().isupper() and len(linhas[k].strip()) < 70 and not re.match(r"^\d+\.", linhas[k].strip()): tit += " " + linhas[k].strip(); k += 1
                 partes.append(((int(m.group(1)), limpa(tit)), linhas[k:b]))
+    if partes[0][0] is None and "Consolidado" in nome:
+        idx2 = [i for i, l in enumerate(linhas) if re.match(r"^\s*FASC[ÍI]CULO\s+\d+\s*$", l.strip())]
+        if len(idx2) >= 2:
+            partes = []
+            for a, b in zip(idx2, idx2[1:] + [len(linhas)]):
+                num_f = int(re.search(r"\d+", linhas[a]).group()); k = a + 1; tit = []
+                while k < b and len(tit) < 3 and not re.match(r"(?i)^\s*(base normativa|desenvolvimento|\d+\.\s|objetivo|pressuposto|escopo|fontes|delimita)", linhas[k]) and linhas[k].strip():
+                    tit.append(linhas[k].strip()); k += 1
+                t = limpa(" ".join(tit)); t = re.split(r"(?<=[a-zà-ú\)])\s+(?=Base normativa)", t)[0]
+                partes.append(((num_f, t[:140]), linhas[k:b]))
+    if partes[0][0] is None and "Consolidado" in nome:
+        ult_f = {}
+        for i, l in enumerate(linhas):
+            m = re.match(r"^\s*F(\d{1,3})\s*[—–-]\s*(\S.*)$", l.strip())
+            if m and len(l.strip()) < 200 and not re.match(r"(?i)^F\d+\s*[—–-]\s*F\d+", l.strip()): ult_f[int(m.group(1))] = (i, m.group(2))
+        mr = re.search(r"Fasciculos_(\d+)_a_(\d+)", nome)
+        ult_f = {n: v for n, v in ult_f.items() if mr and int(mr.group(1)) <= n <= int(mr.group(2))}
+        blocos = sorted(ult_f.values())
+        if len(blocos) >= 2:
+            partes = []
+            for (a, tit), nb in zip(blocos, blocos[1:] + [(len(linhas), "")]):
+                num_f = [n for n, v in ult_f.items() if v[0] == a][0]
+                partes.append(((num_f, limpa(tit)[:140]), linhas[a + 1: nb[0]]))
     for meta_p, trecho in partes:
         if meta_p: num, titulo = meta_p
         else:
@@ -342,6 +412,8 @@ for f in arqs:
             if ta: titulo = ta
             if nome == "Direito_Civil_Volume_1_Fasciculo_1": titulo = "Fundamentos, personalidade e capacidade civil"
         est = estruturar(trecho, nome)
+        mcut = re.match(r"^([A-ZÁÉÍÓÚÂÊÔÃÕÇ0-9][A-ZÁÉÍÓÚÂÊÔÃÕÇ0-9 ,:;/()\-–—&.]{10,}?)\s+(?=[A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-záéíóúâêôãõç])", titulo)
+        if mcut: titulo = mcut.group(1).strip(" ,:;-–—")
         titulo = tit_case(titulo) if titulo.isupper() else titulo
         cap.append({"arquivo": f, "disc": disc, "titulo": titulo, "num": num, "materia": materia(disc, titulo, nome), "est": est})
 

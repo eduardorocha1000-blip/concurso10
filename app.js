@@ -149,7 +149,7 @@ function biblioteca(mod) {
 const blocosHtml = bs => (bs || []).map(([t, x]) => t === 'h' ? `<h4>${esc(x)}</h4>` : t === 'li' ? `<p style="margin:2px 0 2px 14px">• ${esc(x)}</p>` : `<p>${esc(x)}</p>`).join('');
 function questaoHtml(id, q) {
   const st = store.get('dq', {})[id + ':' + q.n], L = 'ABCDE', gi = q.g ? L.indexOf(q.g) : -1;
-  if (!q.a || q.a.length < 2) return `<div class="card" id="dq-${id}-${q.n}"><p><b>${q.n}.</b> ${esc(q.e)}</p>${q.g ? `<p><b>Gabarito: ${q.g}.</b> ${esc(q.c)}</p>` : ''}</div>`;
+  if (!q.a || q.a.length < 2) return `<div class="card" id="dq-${id}-${q.n}"><p><b>${q.n}.</b> ${esc(q.e)}</p>${q.g ? `<p><b>Gabarito: ${q.g}.</b> ${esc(q.c)}</p>` : (q.c ? `<details><summary>Ver comentário</summary><p>${esc(q.c)}</p></details>` : '')}</div>`;
   const alts = q.a.map((t, i) => { const bg = st ? (i === gi ? 'background:#d7f5dd;' : (i === st.pick ? 'background:#fadbd8;' : '')) : ''; return `<button class="sec" data-act="dans" data-id="${id}" data-n="${q.n}" data-i="${i}" style="${bg}display:block;text-align:left;width:100%;margin:3px 0">${L[i]}) ${esc(t)}</button>`; }).join('');
   const fb = st ? `<p>${st.pick === gi ? '✅ <b>Correto.</b>' : '❌ <b>Errado.</b>'} Gabarito: <b>${q.g || '?'}</b>. ${esc(q.c)}</p>` : '';
   return `<div class="card" id="dq-${id}-${q.n}"><p><b>${q.n}.</b> ${esc(q.e)}</p>${alts}${fb}</div>`;
