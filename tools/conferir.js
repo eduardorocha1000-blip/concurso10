@@ -15,6 +15,9 @@ const run = f => vm.runInContext(fs.readFileSync(path.join(R, f), 'utf8'), ctx, 
 const DATA = ctx.DATA; if (!DATA.leis) DATA.leis = [];
 fs.readdirSync(path.join(R, 'data/leis')).forEach(f => run('data/leis/' + f));
 
+const VER = path.join(R, 'dados/verificacao'); fs.mkdirSync(VER, { recursive: true });
+let RES = {}; try { RES = JSON.parse(fs.readFileSync(path.join(VER, 'resultado.json'), 'utf8')); } catch (e) {}
+const CIT = {};   // citações judiciais únicas (para tools/verificar_tribunais.py)
 const sa = s => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 // ---------- leis ----------
 const leiPorId = {}, leiPorNum = {};
@@ -58,6 +61,8 @@ function conferir(texto) {
   const ok = [], falta = [], fraco = [], nao = [], ctxT = stems(texto);
   const vistos = new Set();
   const testa = (sigStr, lista, herdado) => {
+    lista = lista.split(/\b(?:LC|Lei|Decreto)\b/)[0];
+    if (/[a-zà-ú]{3,}/.test(lista.replace(/\b(?:caput|incisos?|par[áa]grafo|[úu]nico|al[íi]neas?|[ao]s?|do|da|de)\b/g, ' '))) return;
     const { sig, lei } = resolveLei(sigStr);
     for (const n of artigos(lista)) {
       const id = 'art.' + n + ' ' + sig; if (vistos.has(id)) continue; vistos.add(id);
@@ -67,11 +72,12 @@ function conferir(texto) {
       const sA = stems(a.t || ''); let comum = 0; ctxT.forEach(s => { if (sA.has(s)) comum++; });
       (comum >= 2 ? ok : fraco).push(id);
     }
+    return true;
   };
   // SIGLA, arts. N ...   e   arts. N ... SIGLA
   const cobertas = [], leis = [];
   for (const m of texto.matchAll(new RegExp(`\\b(${SIG})\\s*[,:]?\\s*[Aa]rts?\\.\\s*([^;()]{1,90}?)(?=;|\\)|\\.\\s+[A-ZÁÉÍÓÚ]|$)`, 'g'))) { testa(m[1], m[2]); cobertas.push([m.index, m.index + m[0].length]); leis.push([m.index, m[1]]); }
-  for (const m of texto.matchAll(new RegExp(`[Aa]rts?\\.\\s*([^;()]{1,80}?)[,\\s]+(?:d[oae]s?\\s+)?(${SIG})(?![A-Za-zÀ-ú])`, 'g'))) { testa(m[2], m[1]); cobertas.push([m.index, m.index + m[0].length]); leis.push([m.index, m[2]]); }
+  for (const m of texto.matchAll(new RegExp(`[Aa]rts?\\.\\s*([^;()]{1,80}?)[,\\s]+(?:d[oae]s?\\s+)?(${SIG})(?![A-Za-zÀ-ú])`, 'g'))) { if (testa(m[2], m[1])) { cobertas.push([m.index, m.index + m[0].length]); leis.push([m.index, m[2]]); } }
   // artigos sem sigla ao lado: herdam a lei citada mais próxima (anterior; senão a primeira do texto); sem lei no texto, ficam pendentes
   for (const m of texto.matchAll(/[Aa]rts?\.\s*([\d.º°\-A-Z, §e]{1,30})/g)) {
     if (cobertas.some(([a, b]) => m.index >= a && m.index < b)) continue;
@@ -85,10 +91,20 @@ function conferir(texto) {
       const s = suml[trib + '|' + n.replace(/\./g, '')]; if (!s) { falta.push(id + ' (não encontrada na base de súmulas)'); continue; }
       const sS = stems(s.texto || ''); let comum = 0; ctxT.forEach(x => { if (sS.has(x)) comum++; }); (comum >= 2 ? ok : fraco).push(id); } }
   for (const m of texto.matchAll(/\bSV\s*(\d+)/g)) { const id = 'SV ' + m[1] + '/STF'; if (vistos.has(id)) continue; vistos.add(id); (suml['STF-SV|' + m[1]] ? ok : falta).push(id); }
-  // não verificáveis automaticamente
-  for (const m of texto.matchAll(/\b(Tema(?:s)?\s+(?:Repetitivo\s+)?[\d.]+(?:\/(?:STF|STJ))?|(?:REsp|AREsp|AgInt|RE|ARE|HC|RHC|ADI|ADPF|ADC|ADO|MS|RMS|Rcl|IRDR|IAC)\s*(?:n[ºo°]\s*)?[\d.]+(?:\/[A-Z]{2})?)/g)) { const id = m[1].replace(/\s+/g, ' '); if (!vistos.has(id)) { vistos.add(id); nao.push(id + ' (precisa ser conferido no site do tribunal)'); } }
+  // decisões judiciais: conferidas por tools/verificar_tribunais.py (STF: API do portal de jurisprudência; STJ: Dados Abertos)
+  for (const m of texto.matchAll(/\b(Tema(?:s)?\s+(?:Repetitivo\s+)?([\d.]+)(?:\/(?:STF|STJ))?|(REsp|AREsp|RE|ARE|HC|RHC|ADI|ADPF|ADC|ADO|MS|RMS|Rcl|IRDR|IAC)\s*(?:n[ºo°]\s*)?([\d.]+)(?:\/[A-Z]{2})?)/g)) {
+    const tipo = m[2] ? 'Tema' : m[3], num = (m[2] || m[4]).replace(/\./g, ''); if (!num || num.length > 8 || (tipo !== 'Tema' && num.length < 3)) continue;
+    const id = tipo + ' ' + num; if (vistos.has(id)) continue; vistos.add(id);
+    const janela = texto.slice(Math.max(0, m.index - 220), m.index + m[0].length + 220);
+    if (!CIT[id]) CIT[id] = { tipo, num, ctx: janela };
+    const r = RES[id], rot = m[1].replace(/\s+/g, ' ');
+    if (!r) nao.push(rot + ' (precisa ser conferido no site do tribunal)');
+    else if (r.r === 'ok') ok.push(rot + (r.u ? ' [' + r.u + ']' : ''));
+    else if (r.r === 'fraco') fraco.push(rot + (r.u ? ' [' + r.u + ']' : ''));
+    else nao.push(rot + ' (não localizado nos dados oficiais consultados: pode ser decisão monocrática, muito recente ou citação errada; confira no site do tribunal)');
+  }
   const total = ok.length + falta.length + fraco.length + nao.length;
-  return { s: (ok.length && !falta.length && !fraco.length && !nao.length) ? 1 : 0, ok: ok.length, t: total, p: [...falta, ...fraco.map(x => x + ' (existe, mas o texto do artigo/súmula parece não tratar do assunto)'), ...nao].slice(0, 12) };
+  return { s: (ok.length && !falta.length && !fraco.length && !nao.length) ? 1 : 0, ok: ok.length, t: total, v: ok.filter(x => /\[http/.test(x)).slice(0, 12), p: [...falta, ...fraco.map(x => x + ' (existe, mas o texto do artigo/súmula parece não tratar do assunto)'), ...nao].slice(0, 12) };
 }
 // ---------- chave estável (mesmo algoritmo em app.js) ----------
 const strs = (v, out = []) => { if (typeof v === 'string') out.push(v); else if (Array.isArray(v)) v.forEach(x => strs(x, out)); else if (v && typeof v === 'object') Object.values(v).forEach(x => strs(x, out)); return out; };
@@ -101,11 +117,12 @@ for (const colecao of ['principios', 'doutrina', 'exemplos', 'questoes', 'cards'
 }
 // capítulos da doutrina própria
 const dir = path.join(R, 'data/doutrina');
-if (fs.existsSync(dir)) fs.readdirSync(dir).filter(f => /^f\d+\.js$/.test(f)).forEach(f => {
+if (fs.existsSync(dir)) fs.readdirSync(dir).filter(f => /^[fi]\d+\.js$/.test(f)).forEach(f => {
   const w = { DOUT: {} }; vm.runInNewContext(fs.readFileSync(path.join(dir, f), 'utf8'), { window: w }); const id = f.slice(0, -3);
   CONF['cap:' + id] = conferir(strs(w.DOUT[id]).join(' ').replace(/\s+/g, ' '));
 });
 Object.values(CONF).forEach(c => c.s ? cont.ok++ : cont.pend++);
+fs.writeFileSync(path.join(VER, 'citacoes.json'), JSON.stringify(CIT));
 fs.writeFileSync(path.join(R, 'data/conferencia.js'), 'window.CONF=' + JSON.stringify(CONF) + ';\n');
 const por = {}; Object.entries(CONF).forEach(([k, c]) => { const g = k.split(':')[0]; por[g] = por[g] || [0, 0, 0, 0]; por[g][c.s ? 0 : 1]++; por[g][2] += c.ok; por[g][3] += c.t; });
 console.log('Itens conferidos (ok) / pendentes / citações localizadas / citações totais:'); console.table(por);

@@ -16,8 +16,9 @@ function confTag(chave, detalhe) {
 function confBanner(chave) {
   const c = (window.CONF || {})[chave], manual = store.get('confmanual', {})[chave];
   const lista = c && c.p && c.p.length ? `<ul style="margin:4px 0 4px 18px">${c.p.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '';
+  const ver = c && c.v && c.v.length ? `<details><summary>Decisões conferidas nos sites oficiais (${c.v.length})</summary><ul style="margin:4px 0 4px 18px">${c.v.map(x => { const m = /^(.*) \[(https?:[^\]]+)\]$/.exec(x); return m ? `<li><a href="${esc(m[2])}" target="_blank" rel="noopener">${esc(m[1])}</a></li>` : `<li>${esc(x)}</li>`; }).join('')}</ul></details>` : '';
   const txt = manual ? '✅ Você marcou este conteúdo como conferido.' : (c && c.s ? '✅ <b>JÁ CONFERIDO (citações)</b>: todos os artigos e súmulas citados foram localizados nas fontes oficiais do app. A interpretação jurídica não foi revisada por jurista.' : `⚠ <b>PRECISA SER CONFERIDO</b>. Este texto foi escrito com apoio de IA. ${c && c.t ? `Citações localizadas nas fontes oficiais do app: <b>${c.ok} de ${c.t}</b>. Pendentes:` : 'Não há citação que o app consiga verificar sozinho.'}${lista}`);
-  return `<div class="banner">${txt}<br><button class="sec" data-act="conf" data-k="${esc(chave)}">${manual ? 'Desmarcar' : 'Marcar como conferido por mim'}</button></div>`;
+  return `<div class="banner">${txt}${ver}<br><button class="sec" data-act="conf" data-k="${esc(chave)}">${manual ? 'Desmarcar' : 'Marcar como conferido por mim'}</button></div>`;
 }
 const store = {
   get(k, d) { try { const v = JSON.parse(localStorage.getItem('jus.' + k)); return v ?? d; } catch { return d; } },
@@ -157,7 +158,7 @@ function biblioteca(mod) {
       <p class="row"><button data-act="dread" data-id="${x.id}">${lido[x.id] ? 'Marcar como não lido' : 'Marcar como lido'}</button></p><div id="d-${x.id}"><button class="sec" data-act="dload" data-id="${x.id}">Abrir capítulo</button></div></details>`;
   };
   const porDisc = {}; idx.forEach(x => ((porDisc[x.disc] = porDisc[x.disc] || {})[x.materia] = (porDisc[x.disc][x.materia] || [])).push(x));
-  const nome = d => d.replace(/^DIREITO /, 'Direito ').replace('PROCESSUAL', 'Processual').replace('CIVIL', 'Civil').replace('PENAL', 'Penal').replace('CONSTITUCIONAL', 'Direito Constitucional').replace('ADMINISTRATIVO', 'Administrativo').replace('EMPRESARIAL', 'Empresarial').replace('DO CONSUMIDOR', 'do Consumidor');
+  const nome = d => d === 'CONSTITUCIONAL' ? 'Direito Constitucional' : d.toLowerCase().replace(/(^|\s)([a-zà-ú])/g, (m, a, b) => a + b.toUpperCase()).replace(/ (Do|Da|De|Dos|Das|E) /g, x => x.toLowerCase());
   return `<div class="card"><h3>📖 Doutrina própria (${idx.length} capítulos)</h3><p class="mut">Lidos: <b>${nLido}</b> · ${soma('casos')} casos práticos · ${soma('obj')} questões objetivas comentadas · ${soma('disc_q')} questões discursivas. Cada capítulo traz: apresentação e objetivos, sumário, teoria, casos práticos, questões objetivas, discursivas e referências.</p></div>`
     + Object.entries(porDisc).map(([d, ms]) => `<details class="card"><summary><b>${esc(nome(d))}</b> <span class="tag">${Object.values(ms).flat().length}</span></summary>
       ${pratica(mod, PRAT[d], 'Prática de ' + nome(d))}${Object.entries(ms).map(([m, xs]) => `<details class="card"><summary>${esc(m)} <span class="tag">${xs.length}</span></summary>${pratica(mod, d === 'DIREITO CIVIL' ? PRAT_MAT[m] : null, 'Prática: ' + m)}${xs.sort((a, b) => a.ordem - b.ordem || a.titulo.localeCompare(b.titulo)).map(item).join('')}</details>`).join('')}</details>`).join('')

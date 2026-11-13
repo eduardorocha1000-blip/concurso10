@@ -480,3 +480,7 @@ resumo = [{k: v for k, v in i.items()} for i in idx]
 json.dump(resumo, open(os.path.join(RAIZ, "dados", "doutrina", "estrutura.json"), "w", encoding="utf-8"), ensure_ascii=False, indent=1)
 print(len(idx), "capítulos |", sum(1 for i in idx if i["casos"]), "com casos |", sum(1 for i in idx if i["obj"]), "com objetivas |", sum(1 for i in idx if i["disc_q"]), "com discursivas |",
       "total: casos", sum(i["casos"] for i in idx), "obj", sum(i["obj"] for i in idx), "disc", sum(i["disc_q"] for i in idx), "| repetidos:", sum(1 for i in idx if i["status"] == "dup"))
+
+# capítulos escritos a partir do texto das leis (dados/doutrina_ia) entram junto
+import subprocess
+subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), "montar_doutrina_ia.py")], check=False)
