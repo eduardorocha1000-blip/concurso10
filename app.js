@@ -2,6 +2,23 @@
 /* Jus Concursos — PWA offline. Estado do aluno em localStorage. */
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+// ---- Conferência de conteúdo escrito por IA (resultado de tools/conferir.js em data/conferencia.js) ----
+const _strs = (v, out = []) => { if (typeof v === 'string') out.push(v); else if (Array.isArray(v)) v.forEach(x => _strs(x, out)); else if (v && typeof v === 'object') Object.values(v).forEach(x => _strs(x, out)); return out; };
+const _hash = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
+const confChave = (col, x) => col + ':' + _hash(Object.entries(x).filter(([k]) => k !== 'mods' && k !== 'id').flatMap(([, v]) => _strs(v)).join(' '));
+function confTag(chave, detalhe) {
+  const c = (window.CONF || {})[chave], manual = store.get('confmanual', {})[chave];
+  if (manual) return '<span class="tag conf-ok" title="Você marcou como conferido">✅ JÁ CONFERIDO (por você)</span>';
+  if (c && c.s) return '<span class="tag conf-ok" title="Todos os artigos e súmulas citados foram localizados nas fontes oficiais do app (leis do Planalto e súmulas dos tribunais). A interpretação jurídica ainda não foi revisada por jurista.">✅ JÁ CONFERIDO (citações)</span>';
+  const n = c && c.t ? ` ${c.ok}/${c.t}` : '';
+  return `<span class="tag conf-pend" title="${c && c.t ? 'Citações localizadas nas fontes do app: ' + c.ok + ' de ' + c.t + '. ' : 'Sem citação verificável automaticamente. '}Confira em fonte oficial antes de estudar por aqui.">⚠ PRECISA SER CONFERIDO${n}</span>`;
+}
+function confBanner(chave) {
+  const c = (window.CONF || {})[chave], manual = store.get('confmanual', {})[chave];
+  const lista = c && c.p && c.p.length ? `<ul style="margin:4px 0 4px 18px">${c.p.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : '';
+  const txt = manual ? '✅ Você marcou este conteúdo como conferido.' : (c && c.s ? '✅ <b>JÁ CONFERIDO (citações)</b>: todos os artigos e súmulas citados foram localizados nas fontes oficiais do app. A interpretação jurídica não foi revisada por jurista.' : `⚠ <b>PRECISA SER CONFERIDO</b>. Este texto foi escrito com apoio de IA. ${c && c.t ? `Citações localizadas nas fontes oficiais do app: <b>${c.ok} de ${c.t}</b>. Pendentes:` : 'Não há citação que o app consiga verificar sozinho.'}${lista}`);
+  return `<div class="banner">${txt}<br><button class="sec" data-act="conf" data-k="${esc(chave)}">${manual ? 'Desmarcar' : 'Marcar como conferido por mim'}</button></div>`;
+}
 const store = {
   get(k, d) { try { const v = JSON.parse(localStorage.getItem('jus.' + k)); return v ?? d; } catch { return d; } },
   set(k, v) { try { localStorage.setItem('jus.' + k, JSON.stringify(v)); } catch {} }
@@ -136,7 +153,7 @@ function biblioteca(mod) {
     const par = (x.parecidos || []).map(id => byId[id]).filter(Boolean), jaLido = par.find(p => lido[p.id]);
     const aviso = x.status === 'dup' ? `<div class="banner">ℹ Tema parecido com: ${par.map(p => esc(p.titulo.slice(0, 80))).join(' · ')}. ${jaLido ? '<b>✅ Você já leu um deles.</b>' : ''}</div>` : '';
     const tags = (x.casos ? `<span class="tag">${x.casos} casos</span>` : '') + (x.obj ? `<span class="tag">${x.obj} questões</span>` : '') + (x.disc_q ? `<span class="tag">${x.disc_q} discursivas</span>` : '');
-    return `<details class="card" data-item data-id="${x.id}"><summary>${esc(x.titulo)} ${tags}${lido[x.id] ? '<span class="tag">✅ lido</span>' : ''}${x.status === 'dup' ? '<span class="tag">tema parecido</span>' : ''}</summary>${aviso}
+    return `<details class="card" data-item data-id="${x.id}"><summary>${esc(x.titulo)} ${tags}${lido[x.id] ? '<span class="tag">✅ lido</span>' : ''} ${confTag('cap:' + x.id)}${x.status === 'dup' ? '<span class="tag">tema parecido</span>' : ''}</summary>${aviso}
       <p class="row"><button data-act="dread" data-id="${x.id}">${lido[x.id] ? 'Marcar como não lido' : 'Marcar como lido'}</button></p><div id="d-${x.id}"><button class="sec" data-act="dload" data-id="${x.id}">Abrir capítulo</button></div></details>`;
   };
   const porDisc = {}; idx.forEach(x => ((porDisc[x.disc] = porDisc[x.disc] || {})[x.materia] = (porDisc[x.disc][x.materia] || [])).push(x));
@@ -160,7 +177,7 @@ function carregarDoutrina(id) {
   const pintar = () => {
     const b = (window.DOUT || {})[id]; if (!b) { box.innerHTML = '<p class="mut">Texto indisponível (arquivo não encontrado).</p>'; return; }
     const det = (t, corpo, aberto) => `<details class="card"${aberto ? ' open' : ''}><summary><b>${t}</b></summary>${corpo}</details>`;
-    let h = mapaImg;
+    let h = confBanner('cap:' + id) + mapaImg;
     if (b.ap && b.ap.length) h += det('Apresentação e objetivos', blocosHtml(b.ap), true);
     if (b.sumario && b.sumario.length) h += det('Sumário', b.sumario.map(s => `<p style="margin:2px 0">${esc(s)}</p>`).join(''));
     (b.secoes || []).forEach((s, i) => { h += det(`${i + 1}. ${esc(s.t)}`, blocosHtml(s.b), false); });
@@ -215,12 +232,12 @@ const VIEWS = {
 
   principios(mod) {
     const it = DATA.principios.filter(x => inMod(x, mod.id));
-    return filterBox('Filtrar princípios…') + matSelect(it, mod.id) + it.map(p => `<div class="card" data-item data-mat="${esc(p.materia)}"><b>${esc(p.nome)}</b> <span class="tag">${esc(p.materia)}</span><div>${esc(p.desc)}</div></div>`).join('');
+    return filterBox('Filtrar princípios…') + matSelect(it, mod.id) + it.map(p => `<div class="card" data-item data-mat="${esc(p.materia)}"><b>${esc(p.nome)}</b> <span class="tag">${esc(p.materia)}</span> ${confTag(confChave('principios', p))}<div>${esc(p.desc)}</div></div>`).join('');
   },
 
   doutrina(mod) {
     const it = DATA.doutrina.filter(x => inMod(x, mod.id));
-    return biblioteca(mod) + filterBox('Filtrar doutrina…') + it.map(d => `<details class="card" data-item open><summary>${esc(d.titulo)} <span class="tag">${esc(d.materia)}</span></summary>${d.corpo}</details>`).join('');
+    return biblioteca(mod) + filterBox('Filtrar doutrina…') + it.map(d => `<details class="card" data-item open><summary>${esc(d.titulo)} <span class="tag">${esc(d.materia)}</span> ${confTag(confChave('doutrina', d))}</summary>${d.corpo}</details>`).join('');
   },
 
   mapas(mod, keys) {
@@ -248,14 +265,14 @@ const VIEWS = {
 
   exemplos(mod, keys) {
     const it = DATA.exemplos.filter(x => inMod(x, mod.id) && (!keys || keys.includes(x.materia)));
-    return (keys ? '' : filterBox('Filtrar exemplos…')) + it.map(x => `<details class="card" data-item><summary>${esc(x.titulo)} <span class="tag">${esc(x.materia)}</span></summary><p><b>Caso:</b> ${esc(x.caso)}</p><p><b>Resolução:</b> ${x.solucao}</p></details>`).join('');
+    return (keys ? '' : filterBox('Filtrar exemplos…')) + it.map(x => `<details class="card" data-item><summary>${esc(x.titulo)} <span class="tag">${esc(x.materia)}</span> ${confTag(confChave('exemplos', x))}</summary><p><b>Caso:</b> ${esc(x.caso)}</p><p><b>Resolução:</b> ${x.solucao}</p></details>`).join('');
   },
 
   questoes(mod, keys) {
     const all = DATA.questoes.filter(x => inMod(x, mod.id) && (!keys || keys.includes(x.materia))), st = store.get('q', {});
     const nOk = all.filter(q => st[q.id]?.ok).length, nErr = all.filter(q => st[q.id] && !st[q.id].ok).length, nNew = all.length - nOk - nErr;
     const f = keys ? 'todas' : (state.qf || 'todas');
-    const qcard = q => { const a = st[q.id]; return `<div class="card" data-item><div class="mut">${esc(q.materia)} · ${esc(q.banca)} ${esc(q.ano)}</div><p>${esc(q.enun)}</p>
+    const qcard = q => { const a = st[q.id]; return `<div class="card" data-item><div class="mut">${esc(q.materia)} · ${esc(q.banca)} ${esc(q.ano)} ${confTag(confChave('questoes', q))}</div><p>${esc(q.enun)}</p>
       ${q.alts.map((t, i) => `<button class="alt ${a ? (i === q.gab ? 'right' : i === a.pick ? 'wrong' : '') : ''}" data-act="ans" data-q="${q.id}" data-i="${i}" ${a ? 'disabled' : ''}>${'ABCDE'[i]}) ${esc(t)}</button>`).join('')}
       ${a ? `<div class="banner">${a.ok ? '✅ Correto.' : '❌ Errou.'} <b>Gabarito: ${'ABCDE'[q.gab]}</b><br>${esc(q.coment)}<br><button class="sec" data-act="redo" data-q="${q.id}">Refazer</button></div>` : ''}</div>`; };
     const qs = all.filter(q => f === 'erradas' ? st[q.id] && !st[q.id].ok : f === 'novas' ? !st[q.id] : true);
@@ -282,14 +299,14 @@ const VIEWS = {
 
   discursivas(mod, keys) {
     const it = DATA.discursivas.filter(x => inMod(x, mod.id) && (!keys || keys.includes(x.materia)));
-    return it.map(d => { const i = DATA.discursivas.indexOf(d); return `<details class="card"><summary>${esc(d.tema)} <span class="tag">${esc(d.materia)}</span></summary>
+    return it.map(d => { const i = DATA.discursivas.indexOf(d); return `<details class="card"><summary>${esc(d.tema)} <span class="tag">${esc(d.materia)}</span> ${confTag(confChave('discursivas', d))}</summary>
       <p>${esc(d.enun)}</p><textarea placeholder="Escreva sua resposta aqui (rascunho salvo automaticamente)" data-draft="d${i}">${esc(store.get('draft.d' + i, ''))}</textarea>
       <h3>Espelho de correção (autoavaliação)</h3>${d.espelho.map((e, j) => `<label style="display:block"><input type="checkbox" data-chk="d${i}_${j}" ${store.get('chk.d' + i + '_' + j, false) ? 'checked' : ''}> ${esc(e)}</label>`).join('')}</details>`; }).join('');
   },
 
   orais(mod, keys) {
     const it = DATA.orais.filter(x => inMod(x, mod.id) && (!keys || keys.includes(x.materia)));
-    return `${keys ? '' : '<p class="mut">Responda em voz alta (cronometre 2–3 min) e só então abra a resposta-modelo.</p>'}${it.map(o => `<details class="card"><summary>${esc(o.pergunta)} <span class="tag">${esc(o.materia)}</span></summary><p>${esc(o.resposta)}</p></details>`).join('')}`;
+    return `${keys ? '' : '<p class="mut">Responda em voz alta (cronometre 2–3 min) e só então abra a resposta-modelo.</p>'}${it.map(o => `<details class="card"><summary>${esc(o.pergunta)} <span class="tag">${esc(o.materia)}</span> ${confTag(confChave('orais', o))}</summary><p>${esc(o.resposta)}</p></details>`).join('')}`;
   }
 };
 
@@ -422,6 +439,7 @@ document.addEventListener('click', e => {
   else if (a === 'egall') { store.set('egoff', d.v === '1' ? [] : [...new Set(DATA.enunciados.map(x => x.fonte))]); rerender(); }
   else if (a === 'er') { const off = new Set(store.get('eroff', [])); off.has(d.r) ? off.delete(d.r) : off.add(d.r); store.set('eroff', [...off]); rerender(); }
   else if (a === 'erall') { store.set('eroff', d.v === '1' ? [] : [...new Set(DATA.enunciados.map(ramoDe))]); rerender(); }
+  else if (a === 'conf') { const m = store.get('confmanual', {}); m[d.k] ? delete m[d.k] : (m[d.k] = 1); store.set('confmanual', m); const open = [...document.querySelectorAll('details[open]')].map(e => e.dataset.id || e.querySelector('summary')?.textContent.slice(0, 20)); rerender(); document.querySelectorAll('details').forEach(e => { if (open.includes(e.dataset.id || e.querySelector('summary')?.textContent.slice(0, 20))) e.open = true; }); if (d.k.startsWith('cap:')) { const id = d.k.slice(4), b = document.getElementById('d-' + id); if (b && window.DOUT && window.DOUT[id]) carregarDoutrina(id); } }
   else if (a === 'dload') carregarDoutrina(d.id);
   else if (a === 'dread') { const l = store.get('dread', {}); l[d.id] ? delete l[d.id] : (l[d.id] = 1); store.set('dread', l); const open = [...document.querySelectorAll('details[open]')].map(e => e.dataset.id || e.querySelector('summary')?.textContent.slice(0, 20)); rerender(); document.querySelectorAll('details').forEach(e => { if (open.includes(e.dataset.id || e.querySelector('summary')?.textContent.slice(0, 20))) e.open = true; }); }
   else if (a === 'dans') { const b = (window.DOUT || {})[d.id], q = b && b.obj.find(x => String(x.n) === d.n); if (!q) return; const st = store.get('dq', {}); st[d.id + ':' + q.n] = { pick: +d.i }; store.set('dq', st);
