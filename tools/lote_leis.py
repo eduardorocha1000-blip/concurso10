@@ -53,6 +53,10 @@ L = [
 ("l8213","Planos de Benefícios da Previdência Social (Lei 8.213/1991)","Direito Previdenciário","leis/l8213cons.htm"),
 ("l8212","Custeio da Seguridade Social (Lei 8.212/1991)","Direito Previdenciário","leis/l8212cons.htm"),
 ("l8742","LOAS — Assistência Social (Lei 8.742/1993)","Direito Previdenciário","leis/l8742.htm"),
+("l12651","Código Florestal (Lei 12.651/2012)","Direito Ambiental","_ato2011-2014/2012/lei/l12651.htm"),
+("l9985","SNUC — Unidades de Conservação (Lei 9.985/2000)","Direito Ambiental","leis/l9985.htm"),
+("l9433","Política Nacional de Recursos Hídricos (Lei 9.433/1997)","Direito Ambiental","leis/l9433.htm"),
+("l12305","Política Nacional de Resíduos Sólidos (Lei 12.305/2010)","Direito Ambiental","_ato2007-2010/2010/lei/l12305.htm"),
 ]
 for i, n, m, u in L:
     f = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "leis", i + ".js")
