@@ -31,12 +31,13 @@ const SIGLA = { CF: 'cf', CC: 'cc', CPC: 'cpc', CPP: 'cpp', CP: 'cp', CLT: 'clt'
 const NOMES = [['Constituição Federal', 'CF'], ['Constituição da República', 'CF'], ['Constituição', 'CF'], ['Código de Processo Civil', 'CPC'], ['Código de Processo Penal', 'CPP'], ['Código Civil', 'CC'], ['Código Penal', 'CP'],
   ['Código de Defesa do Consumidor', 'CDC'], ['Código Tributário Nacional', 'CTN'], ['Estatuto da Criança e do Adolescente', 'ECA'], ['Lei de Introdução às Normas do Direito Brasileiro', 'LINDB']];
 const nomesRx = NOMES.map(n => n[0]).join('|');
-const SIG = `(?:${nomesRx}|CPC|CPP|CDC|CTN|CTB|CLT|ECA|EOAB|CED|LINDB|LRF|LEP|LAI|LGPD|CF|CC|CP|Lei Complementar\\s*(?:n[ºo°]\\s*)?[\\d.]+\\s*\\/\\s*\\d+|LC\\s*[\\d.]+\\s*\\/\\s*\\d+|Decreto-Lei\\s*(?:n[ºo°]\\s*)?[\\d.]+\\s*\\/\\s*\\d+|Lei\\s*(?:n[ºo°]\\s*)?[\\d.]+\\s*\\/\\s*\\d+)`;
+const SIG = `(?:${nomesRx}|CPC|CPP|CDC|CTN|CTB|CLT|ECA|EOAB|CED|LINDB|LRF|LEP|LAI|LGPD|CF|CC|CP|EC\\s*\\d+\\s*\\/\\s*\\d+|Lei Complementar\\s*(?:n[ºo°]\\s*)?[\\d.]+\\s*\\/\\s*\\d+|LC\\s*[\\d.]+\\s*\\/\\s*\\d+|Decreto-Lei\\s*(?:n[ºo°]\\s*)?[\\d.]+\\s*\\/\\s*\\d+|Lei\\s*(?:n[ºo°]\\s*)?[\\d.]+\\s*\\/\\s*\\d+)`;
 function resolveLei(s) {
   s = s.trim();
   for (const [n, sg] of NOMES) if (s === n) return { sig: sg, lei: leiPorId[SIGLA[sg]] };
   if (SIGLA[s] !== undefined) return { sig: s, lei: leiPorId[SIGLA[s]] };
   if (s === 'CED') return { sig: 'CED', lei: null };
+  const ec = /^EC\s*(\d+)\s*\//.exec(s); if (ec) return { sig: s.replace(/\s+/g, ' '), lei: leiPorId['ec' + ec[1]] || null };
   const m = /([\d.]+)\s*\/\s*\d+/.exec(s); if (!m) return { sig: s, lei: null };
   const tipo = /^(Lei Complementar|LC)/i.test(s) ? 'LC' : /^Decreto/i.test(s) ? 'DL' : 'L';
   return { sig: s.replace(/\s+/g, ' '), lei: leiPorNum[tipo + m[1].replace(/\./g, '')] || null };

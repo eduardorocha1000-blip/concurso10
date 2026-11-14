@@ -50,6 +50,9 @@ L = [
 ("l9514","Alienação Fiduciária de Imóveis (Lei 9.514/1997)","Direito Civil","leis/l9514.htm"),
 ("del911","Alienação Fiduciária de Móveis (DL 911/1969)","Direito Civil","decreto-lei/Del0911.htm"),
 ("l9656","Planos de Saúde (Lei 9.656/1998)","Direito do Consumidor","leis/l9656.htm"),
+("l8213","Planos de Benefícios da Previdência Social (Lei 8.213/1991)","Direito Previdenciário","leis/l8213cons.htm"),
+("l8212","Custeio da Seguridade Social (Lei 8.212/1991)","Direito Previdenciário","leis/l8212cons.htm"),
+("l8742","LOAS — Assistência Social (Lei 8.742/1993)","Direito Previdenciário","leis/l8742.htm"),
 ]
 for i, n, m, u in L:
     f = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "leis", i + ".js")
