@@ -23,9 +23,9 @@ const sa = s => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase()
 const leiPorId = {}, leiPorNum = {};
 DATA.leis.forEach(l => {
   leiPorId[l.id] = l;
-  const m = /(Lei Complementar|Lei|Decreto-Lei|LC)\s*(?:n[ºo°]\s*)?([\d.]+)\s*\/\s*(\d{2,4})/i.exec(l.nome || '');
-  if (m) { const tipo = /compl|^LC$/i.test(m[1]) ? 'LC' : /decreto/i.test(m[1]) ? 'DL' : 'L'; leiPorNum[tipo + m[2].replace(/\./g, '')] = l; }
-  (l.nome.match(/(Lei|Decreto-Lei|Lei Complementar)\s*n?[ºo°]?\s*[\d.]+\s*\/\s*\d+/gi) || []).forEach(s => { const mm = /([\d.]+)/.exec(s); if (mm) { const tipo = /compl/i.test(s) ? 'LC' : /decreto/i.test(s) ? 'DL' : 'L'; leiPorNum[tipo + mm[1].replace(/\./g, '')] = l; } });
+  const m = /(Lei Complementar|Lei|Decreto-Lei|LC|DL)\s*(?:n[ºo°]\s*)?([\d.]+)\s*\/\s*(\d{2,4})/i.exec(l.nome || '');
+  if (m) { const tipo = /compl|^LC$/i.test(m[1]) ? 'LC' : /decreto|^DL$/i.test(m[1]) ? 'DL' : 'L'; leiPorNum[tipo + m[2].replace(/\./g, '')] = l; }
+  (l.nome.match(/(Lei|Decreto-Lei|DL|Lei Complementar)\s*n?[ºo°]?\s*[\d.]+\s*\/\s*\d+/gi) || []).forEach(s => { const mm = /([\d.]+)/.exec(s); if (mm) { const tipo = /compl/i.test(s) ? 'LC' : /decreto|^DL/i.test(s) ? 'DL' : 'L'; leiPorNum[tipo + mm[1].replace(/\./g, '')] = l; } });
 });
 const SIGLA = { CF: 'cf', CC: 'cc', CPC: 'cpc', CPP: 'cpp', CP: 'cp', CLT: 'clt', CDC: 'cdc', CTN: 'ctn', ECA: 'eca', EOAB: 'eoab', LINDB: 'lindb', LRF: 'lrf', LEP: 'lep', CTB: 'ctb', LAI: 'lai', LGPD: 'l13709' };
 const NOMES = [['Constituição Federal', 'CF'], ['Constituição da República', 'CF'], ['Constituição', 'CF'], ['Código de Processo Civil', 'CPC'], ['Código de Processo Penal', 'CPP'], ['Código Civil', 'CC'], ['Código Penal', 'CP'],
