@@ -116,6 +116,11 @@ def tema(nome, t):
             if re.search(rx, alvo): return nm
     return None
 
+# temas já resumidos à mão (dados/curso/<slug>_resumos/*.json com campo "tema") não entram no resumo extrativo
+SUBST = set()
+for f in glob.glob(os.path.join(R, "dados", "curso", SLUG + "_resumos", "*.json")):
+    try: SUBST.add(json.load(open(f, encoding="utf-8")).get("tema"))
+    except Exception: pass
 questoes_arq, teoria = [], {}
 for p, t in arquivos:
     nome = os.path.basename(p)[:-4]
@@ -128,6 +133,7 @@ for p, t in arquivos:
 def eh_resumo(nome): return nome.startswith("resumo_")
 capitulos = []
 for tm in sorted(teoria):
+    if tm in SUBST: print("tema substituído por resumo escrito:", tm); continue
     fontes = sorted(teoria[tm], key=lambda x: (not eh_resumo(x[0]), x[0]))   # aulas-resumo primeiro (já são condensadas), apostilas depois
     secoes, usados = [], 0; tem_aula = any(eh_resumo(x[0]) for x in fontes)
     for nome, t, primeira in fontes:

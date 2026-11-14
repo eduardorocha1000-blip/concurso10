@@ -76,12 +76,12 @@ function conferir(texto) {
   };
   // SIGLA, arts. N ...   e   arts. N ... SIGLA
   const cobertas = [], leis = [];
-  for (const m of texto.matchAll(new RegExp(`\\b(${SIG})\\s*[,:]?\\s*[Aa]rts?\\.\\s*([^;()]{1,90}?)(?=;|\\)|\\.\\s+[A-ZÁÉÍÓÚ]|$)`, 'g'))) { testa(m[1], m[2]); cobertas.push([m.index, m.index + m[0].length]); leis.push([m.index, m[1]]); }
+  for (const m of texto.matchAll(new RegExp(`\\b(${SIG})\\s*[,:]?\\s*[Aa]rts?\\.\\s*([^;()]{1,90}?)(?=;|\\)|\\.(?:\\s|$)|$)`, 'g'))) { testa(m[1], m[2]); cobertas.push([m.index, m.index + m[0].length]); leis.push([m.index, m[1]]); }
   for (const m of texto.matchAll(new RegExp(`[Aa]rts?\\.\\s*([^;()]{1,80}?)[,\\s]+(?:d[oae]s?\\s+)?(${SIG})(?![A-Za-zÀ-ú])`, 'g'))) { if (testa(m[2], m[1])) { cobertas.push([m.index, m.index + m[0].length]); leis.push([m.index, m[2]]); } }
   // artigos sem sigla ao lado: herdam a lei citada mais próxima (anterior; senão a primeira do texto); sem lei no texto, ficam pendentes
   for (const m of texto.matchAll(/[Aa]rts?\.\s*([\d.º°\-A-Z, §e]{1,30})/g)) {
     if (cobertas.some(([a, b]) => m.index >= a && m.index < b)) continue;
-    const ant = leis.filter(l => l[0] < m.index).pop() || leis[0];
+    const ant = leis.filter(l => l[0] < m.index).sort((a, b) => a[0] - b[0]).pop() || leis.slice().sort((a, b) => a[0] - b[0])[0];
     if (ant) testa(ant[1], m[1], true); else { const id = 'art. ' + m[1].trim() + ' (lei não identificada no texto)'; if (!vistos.has(id)) { vistos.add(id); nao.push(id); } }
   }
   // súmulas
