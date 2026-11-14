@@ -44,7 +44,7 @@ def limpar(h):
     h = html.unescape(h).replace("\xa0", " ")
     return re.sub(r"[ \t]+", " ", h)
 
-ART = re.compile(r"^\s*Art\.?\s*(\d+(?:\.\d+)*)\s*[ºo°]?(?:-([A-Z])(?![a-zà-ú]))?\s*[-–.]?\s*(.*)$", re.I)
+ART = re.compile(r"^\s*Art(?:igo)?\.?\s*(\d+(?:\.\d+)*)\s*[ºo°]?(?:-([A-Z])(?![a-zà-ú]))?\s*[-–.]?\s*(.*)$", re.I)
 
 def artigos(txt, exigir_maiuscula=False):
     txt = re.sub(r"(\((?:Incluíd|Redação|Vide)[^)]*\))\s+(Art\.?\s*\d)", r"\1\n\2", txt)  # artigo colado à nota de alteração da linha anterior
