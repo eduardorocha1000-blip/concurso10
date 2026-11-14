@@ -3,6 +3,15 @@
 import subprocess, sys, os
 P = "https://www.planalto.gov.br/ccivil_03/"
 L = [
+("l12527","Lei de Acesso à Informação (Lei 12.527/2011)","Direito Administrativo","_ato2011-2014/2011/lei/l12527.htm"),
+("l13848","Agências Reguladoras (Lei 13.848/2019)","Direito Administrativo","_ato2019-2022/2019/lei/l13848.htm"),
+("l9494","Fazenda Pública em Juízo (Lei 9.494/1997)","Direito Administrativo","leis/l9494.htm"),
+("l9637","Organizações Sociais (Lei 9.637/1998)","Direito Administrativo","leis/l9637.htm"),
+("l9790","OSCIP (Lei 9.790/1999)","Direito Administrativo","leis/l9790.htm"),
+("l13019","Parcerias com Organizações da Sociedade Civil — MROSC (Lei 13.019/2014)","Direito Administrativo","_ato2011-2014/2014/lei/l13019.htm"),
+("del200","Organização da Administração Federal (DL 200/1967)","Direito Administrativo","decreto-lei/del0200.htm"),
+("d20910","Prescrição contra a Fazenda (Decreto 20.910/1932)","Direito Administrativo","decreto/d20910.htm"),
+("l4132","Desapropriação por Interesse Social (Lei 4.132/1962)","Direito Administrativo","leis/l4132.htm"),
 ("l8112","Regime Jurídico dos Servidores Federais (Lei 8.112/1990)","Direito Administrativo","leis/l8112cons.htm"),
 ("l9784","Processo Administrativo Federal (Lei 9.784/1999)","Direito Administrativo","leis/l9784.htm"),
 ("l12846","Lei Anticorrupção (Lei 12.846/2013)","Direito Administrativo","_ato2011-2014/2013/lei/l12846.htm"),
