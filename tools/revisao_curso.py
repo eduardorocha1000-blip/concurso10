@@ -18,6 +18,7 @@ for f in sorted(glob.glob(os.path.join(R,"dados","curso","*","*.json"))):
     if pasta.endswith("_resumos") or pasta=="adm": grupo="Administrativo"
     else: grupo=pasta
     try: c=json.load(open(f,encoding="utf-8"))
+    if not isinstance(c,dict): continue
     except Exception: continue
     t=texto(c); n=len(re.findall(r"segundo o curso",t,re.I))
     cit=sorted({m.group(1).strip() for m in rx.finditer(t)})
