@@ -59,6 +59,8 @@ L = [
 ("l12305","Política Nacional de Resíduos Sólidos (Lei 12.305/2010)","Direito Ambiental","_ato2007-2010/2010/lei/l12305.htm"),
 ("l13445","Lei de Migração (Lei 13.445/2017)","Direito Internacional","_ato2015-2018/2017/lei/l13445.htm"),
 ("l9474","Estatuto dos Refugiados (Lei 9.474/1997)","Direito Internacional","leis/l9474.htm"),
+("l9868","ADI, ADC e ADO (Lei 9.868/1999)","Direito Constitucional","leis/l9868.htm"),
+("l9882","ADPF (Lei 9.882/1999)","Direito Constitucional","leis/l9882.htm"),
 ]
 for i, n, m, u in L:
     f = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "leis", i + ".js")
