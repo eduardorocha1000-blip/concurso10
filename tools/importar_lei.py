@@ -47,6 +47,7 @@ def limpar(h):
 ART = re.compile(r"^\s*Art\.?\s*(\d+(?:\.\d+)*)\s*[ºo°]?(?:-([A-Z])(?![a-zà-ú]))?\s*[-–.]?\s*(.*)$", re.I)
 
 def artigos(txt, exigir_maiuscula=False):
+    txt = re.sub(r"(\((?:Incluíd|Redação|Vide)[^)]*\))\s+(Art\.?\s*\d)", r"\1\n\2", txt)  # artigo colado à nota de alteração da linha anterior
     out, cur, pre = [], None, ""
     for ln in (l.strip() for l in txt.splitlines()):
         if not ln:
