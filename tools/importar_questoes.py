@@ -197,6 +197,7 @@ def main():
                 g0 = gpos.get(i)
                 if not alts and g0 in ("C", "E") and set(gpos.values()) <= {"C", "E"} and len(enun) >= 25: alts = ["Certo", "Errado"]  # itens certo/errado
                 if not alts and not (len(enun) >= 120 and "•" not in enun and re.search(r"\?\s*$|justifique|fundamente|responda|indique|aponte|explique|discorra|\([abc]\)|assinale|julgue", enun[-350:], re.I)): continue
+                if alts != ["Certo", "Errado"] and alts and (len(alts) < 4 or (len(alts) > 4 and not re.search(r"quest|exame|resolu|rodada|prepara|simulado|revis", titulo, re.I))): continue  # trecho de aula, não questão
                 stats["blocos"] += 1
                 orig, enun = tag_origem(enun)
                 g = gpos.get(i)
