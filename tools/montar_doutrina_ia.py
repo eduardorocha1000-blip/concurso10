@@ -40,7 +40,7 @@ idx = json.loads(open(ixp, encoding="utf-8").read().split("=", 1)[1].rstrip().rs
 idx = [x for x in idx if x["id"][0] not in "ic"]
 for f in glob.glob(os.path.join(OUT, "[ic]*.js")) + glob.glob(os.path.join(OUT, "mapas", "[ic]*.svg")):
     if re.match(r"[ic]\d+\.(js|svg)$", os.path.basename(f)): os.remove(f)
-fontes = [("i", f) for f in sorted(glob.glob(os.path.join(R, "dados", "doutrina_ia", "*.json")))] + [("c", f) for f in sorted(glob.glob(os.path.join(R, "dados", "curso", "*", "*.json")))]
+fontes = [("i", f) for f in sorted(glob.glob(os.path.join(R, "dados", "doutrina_ia", "*.json")))] + [("c", f) for f in sorted(glob.glob(os.path.join(R, "dados", "curso", "*", "*.json"))) if os.path.basename(os.path.dirname(f)) not in ("textos", "questoes")]
 cont = Counter()
 for pref, f in fontes:
     cont[pref] += 1; n = cont[pref]
