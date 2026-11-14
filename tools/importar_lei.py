@@ -72,6 +72,7 @@ def main():
     bruto = baixar(url)
     texto_puro = os.path.exists(url) and url.lower().endswith((".pdf", ".txt"))
     arts = artigos(bruto if texto_puro else limpar(bruto), exigir_maiuscula=texto_puro)
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); from limpar_leis import limpa; arts = limpa(arts)[0]  # versões sucessivas do mesmo artigo -> fica a última
     base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data")
     os.makedirs(os.path.join(base, "leis"), exist_ok=True)
     lei = {"id": lid, "nome": nome, "materia": materia, "mods": mods.split(","), "fonte": url, "artigos": arts}

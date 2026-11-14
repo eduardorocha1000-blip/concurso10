@@ -8,7 +8,7 @@ import random, zlib
 def embaralha(o, titulo):
     """Distribui a alternativa correta entre A-D (nas fontes ela quase sempre é a B), ajustando as letras citadas no comentário."""
     a = o["a"]; L = "ABCD"
-    if len(a) != 4 or o.get("g") not in L: return o
+    if len(a) != 4 or o.get("g") not in list(L): return o
     rng = random.Random(zlib.crc32((titulo + str(o.get("n"))).encode("utf-8")))
     certo = L.index(o["g"]); alvo = (zlib.crc32((titulo + str(o.get("n")) + "k").encode("utf-8")) >> 3) % 4
     outros = [i for i in range(4) if i != certo]; rng.shuffle(outros)
@@ -60,3 +60,20 @@ for pref, f in fontes:
 for x in idx: x["titulo"] = limpa_titulo(x["titulo"]) if x["id"][0] == "f" else x["titulo"]
 open(ixp, "w", encoding="utf-8").write("window.DOUTRINA_IDX=" + json.dumps(idx, ensure_ascii=False) + ";\n")
 print(sum(1 for x in idx if x["id"][0] == "i"), "capítulos baseados em lei e", sum(1 for x in idx if x["id"][0] == "c"), "do curso montados")
+
+# fascículos (fNNN): a alternativa correta também vinha quase sempre na B (73%); distribui A-D de forma determinística (idempotente)
+def embaralha_f():
+    import re as _re
+    n = 0
+    for f in sorted(glob.glob(os.path.join(OUT, "f[0-9]*.js"))):
+        t = open(f, encoding="utf-8").read(); i = t.index("]={") + 2; j = t.rindex(";")
+        d = json.loads(t[i:j]); id_ = os.path.basename(f)[:-3]; mudou = False
+        for k, o in enumerate(d.get("obj", [])):
+            a = o.get("a") or []
+            if len(a) != 4 or o.get("g") not in list("ABCD"): continue
+            alvo = "ABCD"[(zlib.crc32((id_ + str(o.get("n")) + "k").encode("utf-8")) >> 3) % 4]
+            if o["g"] == alvo: continue
+            d["obj"][k] = embaralha(o, id_); mudou = True; n += 1
+        if mudou: open(f, "w", encoding="utf-8").write(t[:i] + json.dumps(d, ensure_ascii=False) + t[j:])
+    return n
+print(embaralha_f(), "gabaritos de fascículos redistribuídos")
