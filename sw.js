@@ -1,4 +1,4 @@
-const V = 'jus-v14';
+const V = 'jus-v15';
 const CORE = ['./', 'index.html', 'styles.css', 'app.js', 'manifest.json', 'icon.svg',
   'data/core.js', 'data/heat.js', 'data/leis_seed.js', 'data/leis_manifest.js',
   'data/jurisprudencia.js', 'data/estudo.js', 'data/principios.js', 'data/conferencia.js', 'data/treino.js', 'juris.js', 'editais.js', 'data/mapas_img.js'];
