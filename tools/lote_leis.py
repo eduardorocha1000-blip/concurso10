@@ -57,6 +57,8 @@ L = [
 ("l9985","SNUC — Unidades de Conservação (Lei 9.985/2000)","Direito Ambiental","leis/l9985.htm"),
 ("l9433","Política Nacional de Recursos Hídricos (Lei 9.433/1997)","Direito Ambiental","leis/l9433.htm"),
 ("l12305","Política Nacional de Resíduos Sólidos (Lei 12.305/2010)","Direito Ambiental","_ato2007-2010/2010/lei/l12305.htm"),
+("l13445","Lei de Migração (Lei 13.445/2017)","Direito Internacional","_ato2015-2018/2017/lei/l13445.htm"),
+("l9474","Estatuto dos Refugiados (Lei 9.474/1997)","Direito Internacional","leis/l9474.htm"),
 ]
 for i, n, m, u in L:
     f = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "data", "leis", i + ".js")
