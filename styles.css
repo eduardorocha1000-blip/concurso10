@@ -38,6 +38,7 @@ button.bad{background:#b42318;color:#fff}button.ok{background:#157f3b;color:#fff
 @media(prefers-color-scheme:dark){.banner{background:#3a3000;color:#ffe9a0;border-color:#6b5a00}}
 details{margin:6px 0}summary{cursor:pointer;font-weight:600}
 .alt{display:block;width:100%;text-align:left;margin:6px 0;background:var(--card);color:var(--tx);border:1px solid var(--bd)}
+.alt.sel{background:#e0e7ff;border-color:#6366f1;color:#312e81}
 .alt.right{background:#d1fadf;border-color:#12b76a;color:#05603a}.alt.wrong{background:#fee4e2;border-color:#f04438;color:#7a271a}
 .flash{min-height:180px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:1.15rem;cursor:pointer;user-select:none}
 .tree,.tree ul{list-style:none;margin:0;padding-left:18px;border-left:2px solid var(--bd)}

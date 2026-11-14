@@ -6,6 +6,16 @@ const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;
 const _strs = (v, out = []) => { if (typeof v === 'string') out.push(v); else if (Array.isArray(v)) v.forEach(x => _strs(x, out)); else if (v && typeof v === 'object') Object.values(v).forEach(x => _strs(x, out)); return out; };
 const _hash = s => { let h = 5381; for (let i = 0; i < s.length; i++) h = ((h << 5) + h + s.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
 const confChave = (col, x) => col + ':' + _hash(Object.entries(x).filter(([k]) => k !== 'mods' && k !== 'id').flatMap(([, v]) => _strs(v)).join(' '));
+function addErr(q) { // erro vira flashcard (revisão imediata, SM-2 depois)
+  const g = gabEf(q), ec = store.get('errcards', []), id = 'e_' + q.id, cs = store.get('cards', {});
+  if (g < 0 || !q.alts[g]) return;
+  if (!ec.some(c => c.id === id)) ec.push({ id, materia: q.materia + ' · caderno de erros', f: q.enun, v: 'Gabarito ' + 'ABCDE'[g] + ') ' + q.alts[g] + (q.coment ? ' — ' + q.coment : ''), mods: q.mods });
+  store.set('errcards', ec); delete cs[id]; store.set('cards', cs);
+}
+function aplicaGab(q) { // quando o gabarito chega depois, reavalia a resposta já marcada
+  const st = store.get('q', {}), r = st[q.id], g = gabEf(q); if (!r || g < 0 || r.ok !== null) return;
+  r.ok = r.pick === g; store.set('q', st); if (!r.ok) addErr(q);
+}
 function confTag(chave, detalhe) {
   const c = (window.CONF || {})[chave], manual = store.get('confmanual', {})[chave];
   if (manual) return '<span class="tag conf-ok" title="Você marcou como conferido">✅ JÁ CONFERIDO (por você)</span>';
@@ -20,6 +30,7 @@ function confBanner(chave) {
   const txt = manual ? '✅ Você marcou este conteúdo como conferido.' : (c && c.s ? '✅ <b>JÁ CONFERIDO (citações)</b>: todos os artigos e súmulas citados foram localizados nas fontes oficiais do app. A interpretação jurídica não foi revisada por jurista.' + (chave.startsWith('cap:c') ? ' Os pontos marcados «segundo o curso» vêm da aula e não entram nessa conferência.' : '') : `⚠ <b>PRECISA SER CONFERIDO</b>. ${chave.startsWith('cap:c') ? 'Resumo escrito a partir do seu curso e das leis do app. Os pontos marcados «segundo o curso» vêm da aula (súmulas, decisões, normas fora da base) e não foram conferidos em fonte oficial.' : 'Este texto foi escrito com apoio de IA.'} ${c && c.t ? `Citações localizadas nas fontes oficiais do app: <b>${c.ok} de ${c.t}</b>. Pendentes:` : 'Não há citação que o app consiga verificar sozinho.'}${lista}`);
   return `<div class="banner">${txt}${ver}<br><button class="sec" data-act="conf" data-k="${esc(chave)}">${manual ? 'Desmarcar' : 'Marcar como conferido por mim'}</button></div>`;
 }
+const gabEf = q => { if (q.gab >= 0) return q.gab; const m = (window.GABARITOS || {})[q.id] || store.get('qgab', {})[q.id]; return m ? 'ABCDE'.indexOf(String(m).toUpperCase()) : -1; };
 const store = {
   get(k, d) { try { const v = JSON.parse(localStorage.getItem('jus.' + k)); return v ?? d; } catch { return d; } },
   set(k, v) { try { localStorage.setItem('jus.' + k, JSON.stringify(v)); } catch {} }
@@ -87,7 +98,7 @@ function route() {
 function home() {
   const cards = store.get('cards', {}), qs = store.get('q', {});
   const now = Date.now(), due = DATA.cards.filter(c => !cards[c.id] || cards[c.id].due <= now).length;
-  const ans = Object.values(qs), ok = ans.filter(a => a.ok).length;
+  const ans = Object.values(qs).filter(a => a.ok !== null), ok = ans.filter(a => a.ok).length;
   return `<p class="mut">Plataforma de estudos para concursos jurídicos. Funciona offline; seu progresso fica neste aparelho.</p>
   <div class="grid">${DATA.modulos.map(m => `<a class="card mod" style="--c:${m.cor}" href="#/m/${m.id}/visao"><h2>${m.icone} ${esc(m.nome)}</h2><div class="mut">${esc(m.desc)}</div></a>`).join('')}</div>
   <a class="card mod" style="--c:#334155" href="#/editais"><h2>📋 Editais</h2><div class="mut">A matéria (conteúdo programático) dos últimos editais de cada grande grupo: OAB, Magistratura SC, MPSC, Magistratura Federal e ENAM.</div></a>
@@ -271,20 +282,26 @@ const VIEWS = {
 
   questoes(mod, keys) {
     const all = DATA.questoes.filter(x => inMod(x, mod.id) && (!keys || keys.includes(x.materia))), st = store.get('q', {});
-    const nOk = all.filter(q => st[q.id]?.ok).length, nErr = all.filter(q => st[q.id] && !st[q.id].ok).length, nNew = all.length - nOk - nErr;
+    const nOk = all.filter(q => st[q.id]?.ok === true).length, nErr = all.filter(q => st[q.id]?.ok === false).length, nSem = all.filter(q => gabEf(q) < 0 && q.alts.length).length, nNew = all.length - nOk - nErr;
     const f = keys ? 'todas' : (state.qf || 'todas');
-    const qcard = q => { const a = st[q.id]; return `<div class="card" data-item><div class="mut">${esc(q.materia)} · ${esc(q.banca)} ${esc(q.ano)} ${confTag(confChave('questoes', q))}</div><p>${esc(q.enun)}</p>
-      ${q.alts.map((t, i) => `<button class="alt ${a ? (i === q.gab ? 'right' : i === a.pick ? 'wrong' : '') : ''}" data-act="ans" data-q="${q.id}" data-i="${i}" ${a ? 'disabled' : ''}>${'ABCDE'[i]}) ${esc(t)}</button>`).join('')}
-      ${a ? `<div class="banner">${a.ok ? '✅ Correto.' : '❌ Errou.'} <b>Gabarito: ${'ABCDE'[q.gab]}</b><br>${esc(q.coment)}<br><button class="sec" data-act="redo" data-q="${q.id}">Refazer</button></div>` : ''}</div>`; };
-    const qs = all.filter(q => f === 'erradas' ? st[q.id] && !st[q.id].ok : f === 'novas' ? !st[q.id] : true);
-    const ms = {}; all.forEach(q => { const s = (ms[q.materia] = ms[q.materia] || { t: 0, ok: 0 }); if (st[q.id]) { s.t++; if (st[q.id].ok) s.ok++; } });
+    const qcard = q => { const a = st[q.id], g = gabEf(q), sem = g < 0;
+      const tag = q.fonte ? `<span class="tag" title="Questão extraída do material do curso (${esc(q.fonte)})">📚 material do curso${sem && q.alts.length ? ' · sem gabarito' : ''}</span>` : confTag(confChave('questoes', q));
+      const cab = `<div class="mut">${esc(q.materia)} · ${esc(q.banca)} ${esc(q.ano)} ${tag}</div><p>${esc(q.enun)}</p>`;
+      if (!q.alts.length) return `<div class="card" data-item>${cab}${q.coment ? `<details><summary>Ver comentário</summary><p>${esc(q.coment)}</p></details>` : ''}</div>`;
+      const btns = q.alts.map((t, i) => `<button class="alt ${a ? (!sem ? (i === g ? 'right' : i === a.pick ? 'wrong' : '') : (i === a.pick ? 'sel' : '')) : ''}" data-act="ans" data-q="${q.id}" data-i="${i}" ${a ? 'disabled' : ''}>${'ABCDE'[i]}) ${esc(t)}</button>`).join('');
+      const marca = `<div class="banner">Sem gabarito cadastrado${a ? ' (sua resposta foi guardada: ' + 'ABCDE'[a.pick] + ')' : ''}. Quando souber, marque o gabarito: ${q.alts.map((t, i) => `<button class="sec" data-act="setgab" data-q="${q.id}" data-l="${'ABCDE'[i]}">${'ABCDE'[i]}</button>`).join(' ')}${q.coment ? `<details><summary>Comentário do material</summary><p>${esc(q.coment)}</p></details>` : ''}${a ? `<br><button class="sec" data-act="redo" data-q="${q.id}">Refazer</button>` : ''}</div>`;
+      const fb = a ? `<div class="banner">${a.ok ? '✅ Correto.' : '❌ Errou.'} <b>Gabarito: ${'ABCDE'[g]}</b><br>${esc(q.coment)}<br><button class="sec" data-act="redo" data-q="${q.id}">Refazer</button></div>` : '';
+      return `<div class="card" data-item>${cab}${btns}${sem ? (a ? marca : `<p class="mut">Sem gabarito cadastrado: sua resposta será guardada até você informar o gabarito.</p>`) : fb}</div>`; };
+    const qs = all.filter(q => f === 'erradas' ? st[q.id]?.ok === false : f === 'novas' ? !st[q.id] || st[q.id].ok === null : f === 'semgab' ? gabEf(q) < 0 && q.alts.length : true);
+    const ms = {}; all.forEach(q => { const s = (ms[q.materia] = ms[q.materia] || { t: 0, ok: 0 }); if (st[q.id] && st[q.id].ok !== null) { s.t++; if (st[q.id].ok) s.ok++; } });
     const desemp = Object.entries(ms).filter(([, s]) => s.t).sort((a, b) => a[1].ok / a[1].t - b[1].ok / b[1].t)
       .map(([m, s]) => `<span class="tag">${esc(m)}: ${Math.round(100 * s.ok / s.t)}% (${s.ok}/${s.t})</span>`).join(' ');
     const btn = (v, n, c) => `<button class="${f === v ? '' : 'sec'}" data-act="qf" data-v="${v}">${n} (${c})</button>`;
     if (keys) return qs.map(qcard).join('') ;
-    return `<div class="card"><div class="row">${btn('todas', 'Todas', all.length)}${btn('novas', 'Novas', nNew)}${btn('erradas', '📕 Caderno de erros', nErr)}</div>
+    const painel = nSem ? `<details class="card"><summary>🔑 Gabaritos pendentes (${nSem})</summary><p class="mut">Cole uma linha por questão, no formato <code>qm0001 B</code>. Também dá para marcar o gabarito direto na questão. O progresso fica neste aparelho; para guardar para sempre, peça a importação em lote.</p><textarea id="gabtxt" rows="4" placeholder="qm0001 B"></textarea><p><button data-act="gabimport">Aplicar gabaritos</button> ${state.gabmsg ? '<span class="mut">' + esc(state.gabmsg) + '</span>' : ''}</p><p class="mut">Informados por você: <code>${esc(Object.entries(store.get('qgab', {})).map(([k, v]) => k + ' ' + v).join('; ')) || 'nenhum'}</code></p></details>` : '';
+    return `<div class="card"><div class="row">${btn('todas', 'Todas', all.length)}${btn('novas', 'Novas', nNew)}${btn('erradas', '📕 Caderno de erros', nErr)}${nSem ? btn('semgab', '🔑 Sem gabarito', nSem) : ''}</div>
       <p class="mut">Acertos: <b>${nOk}</b> · Erros: <b>${nErr}</b>. Cada erro vira um flashcard automático (aba Flashcards).</p>${desemp ? `<p class="mut">Desempenho por matéria (pior primeiro): ${desemp}</p>` : ''}</div>`
-      + filterBox('Filtrar questões…') + (qs.length ? '' : '<p class="mut">Nenhuma questão neste filtro.</p>') + qs.map(qcard).join('');
+      + painel + filterBox('Filtrar questões…') + (qs.length ? '' : '<p class="mut">Nenhuma questão neste filtro.</p>') + qs.map(qcard).join('');
   },
 
   cards(mod, keys) {
@@ -425,13 +442,13 @@ document.addEventListener('click', e => {
   else if (a === 'flowgo') { state.flow.path.push({ id: state.flow.at, ans: d.ans }); state.flow.at = d.to; rerender(); }
   else if (a === 'flip') { state.show = !state.show; rerender(); }
   else if (a === 'rate') { rate(d.id, +d.q); state.show = false; rerender(); }
-  else if (a === 'ans') { const q = DATA.questoes.find(x => x.id === d.q), st = store.get('q', {}); st[q.id] = { pick: +d.i, ok: +d.i === q.gab }; store.set('q', st);
-    if (!st[q.id].ok) { // erro vira flashcard (revisão imediata, SM-2 depois)
-      const ec = store.get('errcards', []), id = 'e_' + q.id, cs = store.get('cards', {});
-      if (!ec.some(c => c.id === id)) ec.push({ id, materia: q.materia + ' · caderno de erros', f: q.enun, v: 'Gabarito ' + 'ABCDE'[q.gab] + ') ' + q.alts[q.gab] + ' — ' + q.coment, mods: q.mods });
-      store.set('errcards', ec); delete cs[id]; store.set('cards', cs);
-    }
+  else if (a === 'ans') { const q = DATA.questoes.find(x => x.id === d.q), st = store.get('q', {}), g = gabEf(q); st[q.id] = { pick: +d.i, ok: g >= 0 ? +d.i === g : null }; store.set('q', st);
+    if (st[q.id].ok === false) addErr(q);
     rerender(); }
+  else if (a === 'setgab') { const q = DATA.questoes.find(x => x.id === d.q), m = store.get('qgab', {}); m[q.id] = d.l; store.set('qgab', m); aplicaGab(q); rerender(); }
+  else if (a === 'gabimport') { const t = ($('#gabtxt') || {}).value || '', m = store.get('qgab', {}); let n = 0;
+    t.split(/\r?\n|;|,/).forEach(l => { const x = l.trim().match(/^([\w\-]+)\s*[:=\s]\s*([A-Ea-e])\b/); if (x && DATA.questoes.some(q => q.id === x[1])) { m[x[1]] = x[2].toUpperCase(); n++; } });
+    store.set('qgab', m); DATA.questoes.forEach(aplicaGab); state.gabmsg = n + ' gabarito(s) aplicado(s).'; rerender(); }
   else if (a === 'sg') { const off = new Set(store.get('sgoff', [])); off.has(d.g) ? off.delete(d.g) : off.add(d.g); store.set('sgoff', [...off]); rerender(); }
   else if (a === 'sgall') { store.set('sgoff', d.v === '1' ? [] : SGRUPOS.map(g => g[0])); rerender(); }
   else if (a === 'sr') { const off = new Set(store.get('sroff', [])); off.has(d.r) ? off.delete(d.r) : off.add(d.r); store.set('sroff', [...off]); rerender(); }
