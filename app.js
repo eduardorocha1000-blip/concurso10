@@ -85,6 +85,9 @@ function route() {
     app.innerHTML = window.editaisView ? editaisView(p2) : '<p>Módulo indisponível.</p>'; window.editaisInit && editaisInit(p2);
   } else if (p1 === 'jurisprudencia') {
     app.innerHTML = window.jurisView ? jurisView() : '<p>Módulo indisponível.</p>'; window.jurisInit && jurisInit();
+  } else if (p1 === 'redacao') {
+    $('#crumb').textContent = '› Redação das peças';
+    app.innerHTML = window.redacaoView ? redacaoView(p2, p3) : '<p>Módulo indisponível.</p>'; window.redacaoInit && redacaoInit(p2);
   } else if (p1 === 'busca') {
     app.innerHTML = buscaView();
   } else if (p1 === 'novidades') {
@@ -107,7 +110,7 @@ function home() {
     <p>✅ Questões respondidas: <b>${ans.length}</b> · Acertos: <b>${ans.length ? Math.round(100 * ok / ans.length) : 0}%</b></p>
     <div class="bar"><i style="width:${DATA.questoes.length ? Math.round(100 * ans.length / DATA.questoes.length) : 0}%"></i></div></div>
   ${statusAtualizacao()}
-  <p><a href="#/editais">📋 Editais</a> · <a href="#/jurisprudencia">⚖️ Pesquisar jurisprudência</a> · <a href="#/busca">🔎 Pesquisar nos documentos</a> · <a href="#/novidades">🔔 Novidades</a> · <a href="#/backup">Backup / restaurar progresso</a></p>`;
+  <p><a href="#/redacao/aulas">✍️ Redação das peças</a> · <a href="#/editais">📋 Editais</a> · <a href="#/jurisprudencia">⚖️ Pesquisar jurisprudência</a> · <a href="#/busca">🔎 Pesquisar nos documentos</a> · <a href="#/novidades">🔔 Novidades</a> · <a href="#/backup">Backup / restaurar progresso</a></p>`;
 }
 
 const _alt = (() => { const m = {}; (window.CHANGELOG || []).forEach(e => e.tipo === 'lei' && (e.alterados.concat(e.novos)).forEach(n => ((m[e.id] = m[e.id] || {})[n] = e.data))); return m; })();
