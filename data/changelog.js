@@ -1,2 +1,2 @@
-window.CHANGELOG = [{"data": "2026-11-13", "tipo": "juris", "id": "stj", "nome": "Teses do STJ", "fonte": "https://dadosabertos.web.stj.jus.br/", "novos": [], "removidos": [], "alterados": [], "total": 15, "obs": "379 → 364 teses"}];
-window.ATUALIZACAO = {"ultima": "2026-11-15T14:01", "alteracoes_hoje": 0};
+window.CHANGELOG = [{"data": "2026-11-13", "tipo": "juris", "id": "stj", "nome": "Teses do STJ", "fonte": "https://dadosabertos.web.stj.jus.br/", "novos": [], "removidos": [], "alterados": [], "total": 15, "obs": "379 → 364 teses"}, {"data": "2026-11-16", "tipo": "sumulas", "id": "stf", "nome": "Súmulas do STF", "fonte": "https://portal.stf.jus.br/jurisprudencia/sumariosumulas.asp?base=30", "novos": [], "removidos": [], "alterados": [], "total": 1, "obs": "782 → 781 súmulas"}];
+window.ATUALIZACAO = {"ultima": "2026-11-16T03:10", "alteracoes_hoje": 1};
