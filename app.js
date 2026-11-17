@@ -108,7 +108,8 @@ function home() {
   <div class="card"><h2>Seu progresso</h2>
     <p>🃏 Flashcards para revisar hoje: <b>${due}</b> de ${DATA.cards.length}</p>
     <p>✅ Questões respondidas: <b>${ans.length}</b> · Acertos: <b>${ans.length ? Math.round(100 * ok / ans.length) : 0}%</b></p>
-    <div class="bar"><i style="width:${DATA.questoes.length ? Math.round(100 * ans.length / DATA.questoes.length) : 0}%"></i></div></div>
+    <div class="bar"><i style="width:${DATA.questoes.length ? Math.round(100 * ans.length / DATA.questoes.length) : 0}%"></i></div>
+    ${(window.DOUTRINA_IDX || []).length ? (() => { const ix = window.DOUTRINA_IDX, lido = store.get('dread', {}), n = ix.filter(x => lido[x.id]).length; return `<p>📖 Doutrina lida: <b>${n}</b> de ${ix.length} · faltam <b>${ix.length - n}</b></p><div class="bar"><i style="width:${Math.round(100 * n / ix.length)}%"></i></div>`; })() : ''}</div>
   ${statusAtualizacao()}
   <p><a href="#/redacao/aulas">✍️ Redação das peças</a> · <a href="#/editais">📋 Editais</a> · <a href="#/jurisprudencia">⚖️ Pesquisar jurisprudência</a> · <a href="#/busca">🔎 Pesquisar nos documentos</a> · <a href="#/novidades">🔔 Novidades</a> · <a href="#/backup">Backup / restaurar progresso</a></p>`;
 }
@@ -164,6 +165,11 @@ function biblioteca(mod) {
   const idx = window.DOUTRINA_IDX; if (!idx || !idx.length) return '';
   const lido = store.get('dread', {}), byId = Object.fromEntries(idx.map(x => [x.id, x]));
   const nLido = idx.filter(x => lido[x.id]).length, soma = k => idx.reduce((s, x) => s + (x[k] || 0), 0);
+  const filt = state.dfilt || 'todos', passa = x => filt === 'todos' || (filt === 'falta' ? !lido[x.id] : !!lido[x.id]);
+  const pct = (n, t) => t ? Math.round(100 * n / t) : 0;
+  const prog = xs => { const n = xs.filter(x => lido[x.id]).length; return `<span class="tag">${n}/${xs.length} lidos</span>`; };
+  const barra = (n, t) => `<div class="bar"><i style="width:${pct(n, t)}%"></i></div>`;
+  const prox = idx.find(x => !lido[x.id] && x.status !== 'dup') || idx.find(x => !lido[x.id]);
   const item = x => {
     const par = (x.parecidos || []).map(id => byId[id]).filter(Boolean), jaLido = par.find(p => lido[p.id]);
     const aviso = x.status === 'dup' ? `<div class="banner">ℹ Tema parecido com: ${par.map(p => esc(p.titulo.slice(0, 80))).join(' · ')}. ${jaLido ? '<b>✅ Você já leu um deles.</b>' : ''}</div>` : '';
@@ -173,9 +179,12 @@ function biblioteca(mod) {
   };
   const porDisc = {}; idx.forEach(x => ((porDisc[x.disc] = porDisc[x.disc] || {})[x.materia] = (porDisc[x.disc][x.materia] || [])).push(x));
   const nome = d => d === 'CONSTITUCIONAL' ? 'Direito Constitucional' : d.toLowerCase().replace(/(^|\s)([a-zà-ú])/g, (m, a, b) => a + b.toUpperCase()).replace(/ (Do|Da|De|Dos|Das|E) /g, x => x.toLowerCase());
-  return `<div class="card"><h3>📖 Doutrina própria (${idx.length} capítulos)</h3><p class="mut">Lidos: <b>${nLido}</b> · ${soma('casos')} casos práticos · ${soma('obj')} questões objetivas comentadas · ${soma('disc_q')} questões discursivas. Cada capítulo traz: apresentação e objetivos, sumário, teoria, casos práticos, questões objetivas, discursivas e referências.</p></div>`
-    + Object.entries(porDisc).map(([d, ms]) => `<details class="card"><summary><b>${esc(nome(d))}</b> <span class="tag">${Object.values(ms).flat().length}</span></summary>
-      ${pratica(mod, PRAT[d], 'Prática de ' + nome(d))}${Object.entries(ms).map(([m, xs]) => `<details class="card"><summary>${esc(m)} <span class="tag">${xs.length}</span></summary>${pratica(mod, d === 'DIREITO CIVIL' ? PRAT_MAT[m] : null, 'Prática: ' + m)}${xs.sort((a, b) => a.ordem - b.ordem || a.titulo.localeCompare(b.titulo)).map(item).join('')}</details>`).join('')}</details>`).join('')
+  return `<div class="card"><h3>📖 Doutrina própria (${idx.length} capítulos)</h3>${barra(nLido, idx.length)}<p><b>${nLido}</b> lidos · <b>${idx.length - nLido}</b> faltam · ${pct(nLido, idx.length)}% concluído</p>
+    <p class="row"><button class="${filt === 'todos' ? '' : 'sec'}" data-act="dfilt" data-v="todos">Todos</button><button class="${filt === 'falta' ? '' : 'sec'}" data-act="dfilt" data-v="falta">Falta ler (${idx.length - nLido})</button><button class="${filt === 'lido' ? '' : 'sec'}" data-act="dfilt" data-v="lido">Já li (${nLido})</button></p>
+    ${prox ? `<p class="mut">Próximo sugerido: <a href="#" data-act="dprox" data-id="${prox.id}">${esc(prox.titulo.slice(0, 90))}</a> <span class="tag">${esc(prox.materia)}</span></p>` : '<p>🎉 Você leu todos os capítulos.</p>'}
+    <p class="mut">${soma('casos')} casos práticos · ${soma('obj')} questões objetivas comentadas · ${soma('disc_q')} questões discursivas. Cada capítulo traz: apresentação e objetivos, sumário, teoria, casos práticos, questões objetivas, discursivas e referências.</p></div>`
+    + Object.entries(porDisc).map(([d, ms]) => ({ d, ms, vis: Object.fromEntries(Object.entries(ms).map(([m, xs]) => [m, xs.filter(passa)])) })).filter(o => Object.values(o.vis).some(v => v.length)).map(({ d, ms, vis }) => `<details class="card" data-id="disc:${esc(d)}"><summary><b>${esc(nome(d))}</b> ${prog(Object.values(ms).flat())}</summary>${barra(Object.values(ms).flat().filter(x => lido[x.id]).length, Object.values(ms).flat().length)}
+      ${pratica(mod, PRAT[d], 'Prática de ' + nome(d))}${Object.entries(ms).filter(([m]) => vis[m].length).map(([m, xs]) => `<details class="card" data-id="mat:${esc(d)}:${esc(m)}"><summary>${esc(m)} ${prog(xs)}</summary><p class="row"><button class="sec" data-act="dmat" data-d="${esc(d)}" data-m="${esc(m)}" data-v="1">Marcar matéria toda como lida</button><button class="sec" data-act="dmat" data-d="${esc(d)}" data-m="${esc(m)}" data-v="0">Desmarcar matéria</button></p>${pratica(mod, d === 'DIREITO CIVIL' ? PRAT_MAT[m] : null, 'Prática: ' + m)}${vis[m].sort((a, b) => a.ordem - b.ordem || a.titulo.localeCompare(b.titulo)).map(item).join('')}</details>`).join('')}</details>`).join('')
     + pratica(mod, ['ECA', 'Ética (OAB)'], 'Prática de outras matérias (ECA e Ética)');
 }
 const blocosHtml = bs => (bs || []).map(([t, x]) => t === 'h' ? `<h4>${esc(x)}</h4>` : t === 'li' ? `<p style="margin:2px 0 2px 14px">• ${esc(x)}</p>` : `<p>${esc(x)}</p>`).join('');
@@ -440,7 +449,7 @@ function rate(id, q) {
 // ---- Eventos ----
 document.addEventListener('click', e => {
   const t = e.target.closest('[data-act]'); if (!t) return;
-  const a = t.dataset.act, d = t.dataset, rerender = () => { const y = window.scrollY; route(); window.scrollTo(0, y); };
+  const a = t.dataset.act, d = t.dataset, rerender = () => { const y = window.scrollY; route(); window.scrollTo(0, y); }, keepOpen = () => { const open = [...document.querySelectorAll('details[open]')].map(e => e.dataset.id || e.querySelector('summary')?.textContent.slice(0, 20)); rerender(); document.querySelectorAll('details').forEach(e => { if (open.includes(e.dataset.id || e.querySelector('summary')?.textContent.slice(0, 20))) e.open = true; }); };
   if (a === 'flow') { state.flow = { i: +d.i, at: DATA.fluxos[+d.i].inicio, path: [] }; rerender(); }
   else if (a === 'flowgo') { state.flow.path.push({ id: state.flow.at, ans: d.ans }); state.flow.at = d.to; rerender(); }
   else if (a === 'flip') { state.show = !state.show; rerender(); }
@@ -462,6 +471,9 @@ document.addEventListener('click', e => {
   else if (a === 'erall') { store.set('eroff', d.v === '1' ? [] : [...new Set(DATA.enunciados.map(ramoDe))]); rerender(); }
   else if (a === 'conf') { const m = store.get('confmanual', {}); m[d.k] ? delete m[d.k] : (m[d.k] = 1); store.set('confmanual', m); const open = [...document.querySelectorAll('details[open]')].map(e => e.dataset.id || e.querySelector('summary')?.textContent.slice(0, 20)); rerender(); document.querySelectorAll('details').forEach(e => { if (open.includes(e.dataset.id || e.querySelector('summary')?.textContent.slice(0, 20))) e.open = true; }); if (d.k.startsWith('cap:')) { const id = d.k.slice(4), b = document.getElementById('d-' + id); if (b && window.DOUT && window.DOUT[id]) carregarDoutrina(id); } }
   else if (a === 'dload') carregarDoutrina(d.id);
+  else if (a === 'dfilt') { state.dfilt = d.v; rerender(); }
+  else if (a === 'dmat') { const l = store.get('dread', {}); (window.DOUTRINA_IDX || []).filter(x => x.disc === d.d && x.materia === d.m).forEach(x => { d.v === '1' ? (l[x.id] = 1) : delete l[x.id]; }); store.set('dread', l); keepOpen(); }
+  else if (a === 'dprox') { e.preventDefault(); state.dfilt = 'todos'; const ix = (window.DOUTRINA_IDX || []).find(x => x.id === d.id); rerender(); if (ix) { const q = s => [...document.querySelectorAll('details[data-id]')].find(el => el.dataset.id === s); [q('disc:' + ix.disc), q('mat:' + ix.disc + ':' + ix.materia), q(ix.id)].forEach(el => el && (el.open = true)); const el = q(ix.id); if (el) el.scrollIntoView({ block: 'center' }); } }
   else if (a === 'dread') { const l = store.get('dread', {}); l[d.id] ? delete l[d.id] : (l[d.id] = 1); store.set('dread', l); const open = [...document.querySelectorAll('details[open]')].map(e => e.dataset.id || e.querySelector('summary')?.textContent.slice(0, 20)); rerender(); document.querySelectorAll('details').forEach(e => { if (open.includes(e.dataset.id || e.querySelector('summary')?.textContent.slice(0, 20))) e.open = true; }); }
   else if (a === 'dans') { const b = (window.DOUT || {})[d.id], q = b && b.obj.find(x => String(x.n) === d.n); if (!q) return; const st = store.get('dq', {}); st[d.id + ':' + q.n] = { pick: +d.i }; store.set('dq', st);
     const gi = q.g ? 'ABCDE'.indexOf(q.g) : -1;
